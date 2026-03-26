@@ -6,39 +6,22 @@
 <title>CRM OWL Booking Agency</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  /* Oculta el header automático de GitHub Pages */
   body > header, body > footer, .site-header, .site-footer,
   header.site-header, nav.site-nav, h1.project-name,
   h2.project-tagline, .page-header { display: none !important; }
 </style>
 <style>
 :root {
-  --bg: #f5c800;
-  --surface: #e6b800;
-  --surface2: #ffffff;
-  --border: #d4a900;
-  --border2: #c89e00;
-  --text: #1a1200;
-  --text2: #4a3800;
-  --text3: #7a6000;
-  --accent: #1a1200;
-  --accent2: #3a2800;
-  --col1: #555;
-  --col2: #1a6fd4;
-  --col3: #0d9e5e;
-  --col4: #b45309;
-  --col5: #be185d;
-  --col6: #6d28d9;
-  --col7: #c2410c;
-  --col8: #15803d;
-  --col9: #0f766e;
-  --font: 'DM Sans', sans-serif;
-  --mono: 'DM Mono', monospace;
+  --bg: #f5c800; --surface: #e6b800; --surface2: #ffffff;
+  --border: #d4a900; --border2: #c89e00;
+  --text: #1a1200; --text2: #4a3800; --text3: #7a6000;
+  --accent: #1a1200; --accent2: #3a2800;
+  --col1: #555; --col2: #1a6fd4; --col3: #0d9e5e; --col4: #b45309;
+  --col5: #be185d; --col6: #6d28d9; --col7: #c2410c; --col8: #15803d; --col9: #0f766e;
+  --font: 'DM Sans', sans-serif; --mono: 'DM Mono', monospace;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
-
-/* Header */
 .header { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; border-bottom: 1px solid var(--border); background: #1a1200; position: sticky; top: 0; z-index: 10; }
 .logo { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 13px; color: #f5c800; letter-spacing: 0.08em; }
 .logo img { width: 32px; height: 32px; border-radius: 50%; }
@@ -46,14 +29,10 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 .stat { text-align: right; }
 .stat-val { font-family: var(--mono); font-size: 16px; font-weight: 500; color: #f5c800; }
 .stat-label { font-size: 10px; color: #a08a00; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 1px; }
-.btn-new { font-family: var(--font); font-size: 12px; font-weight: 500; background: #f5c800; color: #1a1200; border: none; border-radius: 6px; padding: 8px 16px; cursor: pointer; letter-spacing: 0.02em; transition: background 0.15s; }
+.btn-new { font-family: var(--font); font-size: 12px; font-weight: 500; background: #f5c800; color: #1a1200; border: none; border-radius: 6px; padding: 8px 16px; cursor: pointer; transition: background 0.15s; }
 .btn-new:hover { background: #e6b800; }
-
-/* Board */
 .board-wrap { overflow-x: auto; padding: 20px 28px 40px; }
 .board { display: flex; gap: 14px; align-items: flex-start; min-width: max-content; }
-
-/* Column */
 .col { width: 200px; flex-shrink: 0; }
 .col-head { padding: 10px 12px; margin-bottom: 8px; }
 .col-indicator { width: 20px; height: 3px; border-radius: 2px; margin-bottom: 8px; }
@@ -62,8 +41,6 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 .col-cnt { font-size: 10px; color: var(--text3); margin-top: 2px; }
 .col-body { background: #e8b800; border: 1px solid var(--border); border-radius: 10px; padding: 8px; min-height: 200px; transition: background 0.15s, border-color 0.15s; }
 .col-body.over { background: #d4a400; border-color: #1a1200; }
-
-/* Card */
 .card { background: #ffffff; border: 1px solid #e0c800; border-radius: 8px; padding: 12px; margin-bottom: 7px; cursor: grab; transition: border-color 0.15s, transform 0.1s, box-shadow 0.15s; user-select: none; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
 .card:hover { border-color: #c89e00; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
 .card:active { cursor: grabbing; transform: scale(0.98); opacity: 0.7; }
@@ -74,44 +51,28 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 .card-footer { display: flex; justify-content: flex-end; margin-top: 8px; }
 .btn-card { font-family: var(--font); font-size: 10px; color: var(--text3); background: none; border: 1px solid var(--border2); border-radius: 5px; padding: 3px 9px; cursor: pointer; transition: color 0.15s, border-color 0.15s; }
 .btn-card:hover { color: var(--text); border-color: #555; }
-
 .add-btn { font-size: 11px; color: var(--text3); text-align: center; padding: 8px; cursor: pointer; border-radius: 6px; transition: color 0.15s, background 0.15s; margin-top: 4px; }
 .add-btn:hover { color: var(--text2); background: var(--surface2); }
-
-/* Modal overlay */
 .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 100; align-items: flex-start; justify-content: center; padding: 40px 20px; overflow-y: auto; }
 .overlay.open { display: flex; }
-
-/* Modal */
 .modal { background: #ffffff; border: 1px solid #d4a900; border-radius: 14px; padding: 24px; width: 100%; max-width: 600px; position: relative; }
 .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .modal-head h2 { font-size: 15px; font-weight: 500; color: #1a1200; }
 .modal-close { background: none; border: none; color: #7a6000; font-size: 20px; cursor: pointer; line-height: 1; padding: 2px 6px; border-radius: 4px; }
 .modal-close:hover { color: #1a1200; background: #fff8cc; }
-
 .section-label { font-size: 10px; font-weight: 500; color: #7a6000; text-transform: uppercase; letter-spacing: 0.08em; margin: 18px 0 10px; padding-bottom: 6px; border-bottom: 1px solid #e8d060; }
-
 .fg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .f { display: flex; flex-direction: column; gap: 5px; position: relative; }
 .f.full { grid-column: 1 / -1; }
 .f label { font-size: 10px; color: #7a6000; text-transform: uppercase; letter-spacing: 0.06em; }
-.f input, .f textarea, .f select {
-  font-family: var(--font); font-size: 13px; color: #1a1200;
-  background: #fffde8; border: 1px solid #d4b800;
-  border-radius: 7px; padding: 8px 10px; width: 100%;
-  transition: border-color 0.15s;
-}
+.f input, .f textarea { font-family: var(--font); font-size: 13px; color: #1a1200; background: #fffde8; border: 1px solid #d4b800; border-radius: 7px; padding: 8px 10px; width: 100%; transition: border-color 0.15s; }
 .f input:focus, .f textarea:focus { outline: none; border-color: #1a1200; }
 .f textarea { resize: vertical; min-height: 60px; }
-
-/* Autocomplete */
 .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #d4b800; border-top: none; border-radius: 0 0 7px 7px; z-index: 200; max-height: 160px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
 .autocomplete-item { padding: 8px 10px; font-size: 12px; color: #1a1200; cursor: pointer; border-bottom: 1px solid #f0e060; }
 .autocomplete-item:last-child { border-bottom: none; }
 .autocomplete-item:hover { background: #fff8cc; }
 .autocomplete-item strong { color: #b45309; }
-
-/* Doc slots */
 .doc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .doc-slot { background: #fffde8; border: 1px solid #d4b800; border-radius: 8px; padding: 10px 12px; }
 .doc-slot-top { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
@@ -126,8 +87,6 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 .doc-btn.upload:hover { background: #e8f0ff; }
 .doc-btn.remove { border-color: #ef4444; color: #ef4444; }
 .doc-btn.remove:hover { background: #fff0f0; }
-
-/* Modal footer */
 .modal-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 22px; padding-top: 16px; border-top: 1px solid #e8d060; }
 .modal-foot-r { display: flex; gap: 8px; }
 .btn { font-family: var(--font); font-size: 12px; padding: 8px 16px; border-radius: 7px; border: 1px solid #d4b800; background: none; cursor: pointer; color: #4a3800; transition: all 0.15s; }
@@ -136,8 +95,6 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 .btn.primary:hover { background: #3a2800; }
 .btn.danger { border-color: #ef4444; color: #ef4444; }
 .btn.danger:hover { background: #fff0f0; }
-
-/* AI panel */
 .ai-panel { margin-top: 16px; background: #1a1200; border: 1px solid #3a2800; border-radius: 10px; padding: 14px; display: none; }
 .ai-panel.show { display: block; }
 .ai-panel-head { font-size: 10px; color: #f5c800; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
@@ -145,15 +102,11 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 .atab { font-family: var(--font); font-size: 10px; padding: 4px 12px; border-radius: 99px; border: 1px solid #3a2800; background: none; cursor: pointer; color: #a08a00; transition: all 0.15s; }
 .atab.on { background: #f5c800; color: #1a1200; border-color: #f5c800; }
 .ai-out { font-family: var(--mono); font-size: 11px; line-height: 1.7; color: #c8aa40; white-space: pre-wrap; max-height: 240px; overflow-y: auto; }
-
-/* Notification */
 .toast { position: fixed; bottom: 24px; right: 24px; background: #1a1200; border: 1px solid #3a2800; border-radius: 10px; padding: 14px 18px; max-width: 320px; z-index: 999; transform: translateY(20px); opacity: 0; transition: all 0.25s; pointer-events: none; }
 .toast.show { transform: translateY(0); opacity: 1; pointer-events: all; }
 .toast-icon { width: 8px; height: 8px; border-radius: 50%; background: #f5c800; display: inline-block; margin-right: 8px; }
 .toast-title { font-size: 12px; font-weight: 500; color: #f5c800; margin-bottom: 4px; }
 .toast-body { font-size: 11px; color: #a08a00; line-height: 1.5; }
-
-/* Scrollbar */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #d4b800; border-radius: 2px; }
@@ -163,33 +116,24 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 
 <div class="header">
   <div class="logo">
-    <img src="data:image/png;base64,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" alt="OWL" onerror="this.style.display='none'">
+    <img src="data:image/png;base64,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" alt="OWL" onerror="this.style.display='none'">
     CRM OWL BOOKING AGENCY
   </div>
   <div class="header-stats">
-    <div class="stat">
-      <div class="stat-val" id="total-fichas">0</div>
-      <div class="stat-label">Fichas</div>
-    </div>
-    <div class="stat">
-      <div class="stat-val" id="total-pipeline">€ 0</div>
-      <div class="stat-label">Pipeline total</div>
-    </div>
+    <div class="stat"><div class="stat-val" id="total-fichas">0</div><div class="stat-label">Fichas</div></div>
+    <div class="stat"><div class="stat-val" id="total-pipeline">€ 0</div><div class="stat-label">Pipeline total</div></div>
   </div>
   <button class="btn-new" onclick="newCard(null)">+ Nueva ficha</button>
 </div>
 
-<div class="board-wrap">
-  <div class="board" id="board"></div>
-</div>
+<div class="board-wrap"><div class="board" id="board"></div></div>
 
 <div class="ai-panel" id="ai-panel">
-  <div class="ai-panel-head" id="ai-panel-head">Generando documentos...</div>
+  <div class="ai-panel-head" id="ai-panel-head"></div>
   <div class="ai-tabs" id="ai-tabs"></div>
   <div class="ai-out" id="ai-out"></div>
 </div>
 
-<!-- Modal -->
 <div class="overlay" id="overlay">
   <div class="modal">
     <div class="modal-head">
@@ -215,8 +159,11 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 
     <div class="section-label">Datos fiscales</div>
     <div class="fg">
+      <div class="f full"><label>Nombre de la empresa</label><input id="f-company" type="text" placeholder="Razón social completa"></div>
       <div class="f"><label>NIF / CIF</label><input id="f-nif" type="text" placeholder="B12345678"></div>
       <div class="f full"><label>Dirección fiscal</label><input id="f-address" type="text" placeholder="C/ Nombre, Número, Ciudad"></div>
+      <div class="f"><label>Representante legal</label><input id="f-legal-rep" type="text" placeholder="Nombre completo"></div>
+      <div class="f"><label>DNI del representante</label><input id="f-legal-dni" type="text" placeholder="12345678A"></div>
     </div>
 
     <div class="section-label">Notas</div>
@@ -237,7 +184,6 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast">
   <div class="toast-title"><span class="toast-icon"></span><span id="toast-title"></span></div>
   <div class="toast-body" id="toast-body"></div>
@@ -257,13 +203,13 @@ const COLS = [
 ];
 
 const DOC_SLOTS = [
-  { key:'contrato',        label:'Contrato',         color:'#4a9eff' },
-  { key:'factura_proforma',label:'Factura proforma',  color:'#f59e0b' },
-  { key:'rider',           label:'Rider',             color:'#ec4899' },
-  { key:'hospitality',     label:'Hospitality',       color:'#ec4899' },
-  { key:'epk',             label:'EPK',               color:'#ec4899' },
-  { key:'hoja_ruta',       label:'Hoja de Ruta',      color:'#8b5cf6' },
-  { key:'factura',         label:'Factura',           color:'#f97316' }
+  { key:'contrato',        label:'Contrato',        color:'#4a9eff' },
+  { key:'factura_proforma',label:'Factura proforma', color:'#f59e0b' },
+  { key:'rider',           label:'Rider',            color:'#ec4899' },
+  { key:'hospitality',     label:'Hospitality',      color:'#ec4899' },
+  { key:'epk',             label:'EPK',              color:'#ec4899' },
+  { key:'hoja_ruta',       label:'Hoja de Ruta',     color:'#8b5cf6' },
+  { key:'factura',         label:'Factura',          color:'#f97316' }
 ];
 
 function emptyDocs() {
@@ -273,20 +219,19 @@ function emptyDocs() {
 }
 
 function fmt(n) {
-  return '€ ' + (n||0).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  return '€ ' + (n||0).toLocaleString('es-ES', { minimumFractionDigits:0, maximumFractionDigits:0 });
 }
 
-// Load data from localStorage or use defaults
 function loadCards() {
   try {
     const saved = localStorage.getItem('crm_cards');
     if (saved) return JSON.parse(saved);
   } catch(e) {}
   return {
-    'c1': { name:'The Jazz Collective – Razzmatazz', date:'2026-04-12', amount:3500, artist:'The Jazz Collective', venue:'Razzmatazz', email:'booking@razzmatazz.es', artistEmail:'manager@jazzc.com', phone:'+34 932 001 122', nif:'B12345678', address:'C/ Pamplona 88, Barcelona', notes:'Catering incluido', docs:{...emptyDocs(), rider:'rider.pdf', epk:'epk.pdf'}, col:'artista' },
-    'c2': { name:'Marta Soto – Sala Apolo', date:'2026-05-03', amount:1800, artist:'Marta Soto', venue:'Sala Apolo', email:'produccion@apolo.es', artistEmail:'marta@soto.com', phone:'+34 934 412 040', nif:'A98765432', address:'C/ Nou de la Rambla 113', notes:'', docs:emptyDocs(), col:'oferta_enviada' },
-    'c3': { name:'DJ Forma – Nitsa Club', date:'2026-04-20', amount:2200, artist:'DJ Forma', venue:'Nitsa Club', email:'info@nitsa.com', artistEmail:'djforma@mail.com', phone:'+34 933 178 600', nif:'C11223344', address:'C/ Nou de la Rambla 113', notes:'Equipo propio', docs:{...emptyDocs(), rider:'rider_djforma.pdf', hospitality:'hospitality.pdf'}, col:'contrato_factura' },
-    'c4': { name:'Los Tsunamis – BARTS', date:'2026-06-01', amount:4800, artist:'Los Tsunamis', venue:'BARTS', email:'barts@barts.cat', artistEmail:'tsunamis@mgmt.com', phone:'+34 933 240 740', nif:'B55443322', address:'Av. Paral·lel 62, Barcelona', notes:'', docs:{...emptyDocs(), hoja_ruta:'hoja_ruta.pdf'}, col:'factura_cobrada' }
+    'c1': { name:'The Jazz Collective – Razzmatazz', date:'2026-04-12', amount:3500, artist:'The Jazz Collective', venue:'Razzmatazz', email:'booking@razzmatazz.es', artistEmail:'manager@jazzc.com', phone:'+34 932 001 122', company:'Razzmatazz SL', nif:'B12345678', address:'C/ Pamplona 88, Barcelona', legalRep:'', legalDni:'', notes:'Catering incluido', docs:{...emptyDocs(), rider:'rider.pdf', epk:'epk.pdf'}, col:'artista' },
+    'c2': { name:'Marta Soto – Sala Apolo', date:'2026-05-03', amount:1800, artist:'Marta Soto', venue:'Sala Apolo', email:'produccion@apolo.es', artistEmail:'marta@soto.com', phone:'+34 934 412 040', company:'Sala Apolo SL', nif:'A98765432', address:'C/ Nou de la Rambla 113', legalRep:'', legalDni:'', notes:'', docs:emptyDocs(), col:'oferta_enviada' },
+    'c3': { name:'DJ Forma – Nitsa Club', date:'2026-04-20', amount:2200, artist:'DJ Forma', venue:'Nitsa Club', email:'info@nitsa.com', artistEmail:'djforma@mail.com', phone:'+34 933 178 600', company:'Nitsa Club SL', nif:'C11223344', address:'C/ Nou de la Rambla 113', legalRep:'', legalDni:'', notes:'Equipo propio', docs:{...emptyDocs(), rider:'rider_djforma.pdf', hospitality:'hospitality.pdf'}, col:'contrato_factura' },
+    'c4': { name:'Los Tsunamis – BARTS', date:'2026-06-01', amount:4800, artist:'Los Tsunamis', venue:'BARTS', email:'barts@barts.cat', artistEmail:'tsunamis@mgmt.com', phone:'+34 933 240 740', company:'BARTS SL', nif:'B55443322', address:'Av. Paral·lel 62, Barcelona', legalRep:'', legalDni:'', notes:'', docs:{...emptyDocs(), hoja_ruta:'hoja_ruta.pdf'}, col:'factura_cobrada' }
   };
 }
 
@@ -299,7 +244,6 @@ let nextId = Object.keys(cards).length + 1;
 let editId = null;
 let dragId = null;
 
-// ── BUILD BOARD ──────────────────────────────────────────
 function buildBoard() {
   const board = document.getElementById('board');
   board.innerHTML = '';
@@ -336,7 +280,7 @@ function renderAll() {
       card.className = 'card';
       card.draggable = true;
       card.dataset.id = id;
-      card.ondragstart = e => { dragId = id; card.classList.add('dragging'); };
+      card.ondragstart = () => { dragId = id; card.classList.add('dragging'); };
       card.ondragend = () => { card.classList.remove('dragging'); document.querySelectorAll('.col-body').forEach(b => b.classList.remove('over')); };
       const dateStr = c.date ? new Date(c.date + 'T12:00:00').toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric' }) : '—';
       card.innerHTML = `
@@ -359,14 +303,12 @@ function updateHeader() {
   document.getElementById('total-pipeline').textContent = fmt(total);
 }
 
-// ── DRAG & DROP ───────────────────────────────────────────
 function onDrop(e, toCol) {
   e.preventDefault();
   document.getElementById('body-' + toCol).classList.remove('over');
   if (!dragId) return;
   const c = cards[dragId];
-  const fromCol = c.col;
-  if (fromCol === toCol) { dragId = null; return; }
+  if (c.col === toCol) { dragId = null; return; }
   c.col = toCol;
   saveCards();
   renderAll();
@@ -374,53 +316,23 @@ function onDrop(e, toCol) {
   dragId = null;
 }
 
-// ── WEBHOOK Make.com ──────────────────────────────────────
-const MAKE_WEBHOOK = 'https://hook.eu1.make.com/lnxfq84l38pywu3izj52dc3tasjdtsit';
+const MAKE_WEBHOOK = 'https://hook.eu1.make.com/aiva0ref0526k2vnyxto9gqneoedfalv';
 
 async function sendToMake(payload) {
   try {
-    await fetch(MAKE_WEBHOOK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    await fetch(MAKE_WEBHOOK, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
   } catch(e) { console.warn('Make.com webhook error:', e); }
 }
 
-// ── AUTOMATION ────────────────────────────────────────────
 function triggerAutomation(id, col) {
   const c = cards[id];
-  if (col === 'contrato_factura') generateAndSend(id, ['contrato', 'factura_proforma']);
+  if (col === 'contrato_factura') generateAndSend(id, ['contrato','factura_proforma']);
   else if (col === 'rider') {
-    sendToMake({
-      accion: 'rider_hospitality_epk',
-      columna: col,
-      nombre_transaccion: c.name,
-      email_contacto: c.email,
-      email_artista: c.artistEmail,
-      artista: c.artist,
-      venue: c.venue,
-      fecha: c.date,
-      asunto: 'Rider, Hospitality y EPK',
-      cuerpo: 'Adjuntamos Rider, Hospitality y EPK.',
-      archivos: { rider: c.docs.rider, hospitality: c.docs.hospitality, epk: c.docs.epk }
-    });
+    sendToMake({ accion:'rider_hospitality_epk', nombre_transaccion:c.name, email_contacto:c.email, email_artista:c.artistEmail||'', artista:c.artist||'', venue:c.venue||'', fecha:c.date||'', asunto:'Rider, Hospitality y EPK', cuerpo:'Adjuntamos Rider, Hospitality y EPK.', archivos:{ rider:c.docs.rider, hospitality:c.docs.hospitality, epk:c.docs.epk } });
     showToast('Enviando a Make.com', 'Rider, Hospitality y EPK → ' + c.email);
   }
   else if (col === 'hoja_ruta') {
-    sendToMake({
-      accion: 'hoja_ruta',
-      columna: col,
-      nombre_transaccion: c.name,
-      email_contacto: c.email,
-      email_artista: c.artistEmail,
-      artista: c.artist,
-      venue: c.venue,
-      fecha: c.date,
-      asunto: 'Hoja de Ruta',
-      cuerpo: 'Adjuntamos Hoja de Ruta.',
-      archivos: { hoja_ruta: c.docs.hoja_ruta }
-    });
+    sendToMake({ accion:'hoja_ruta', nombre_transaccion:c.name, email_contacto:c.email, email_artista:c.artistEmail||'', artista:c.artist||'', venue:c.venue||'', fecha:c.date||'', asunto:'Hoja de Ruta', cuerpo:'Adjuntamos Hoja de Ruta.', archivos:{ hoja_ruta:c.docs.hoja_ruta } });
     showToast('Enviando a Make.com', 'Hoja de Ruta → ' + (c.artistEmail || c.email));
   }
   else if (col === 'factura_enviada') generateAndSend(id, ['factura']);
@@ -430,35 +342,37 @@ async function generateAndSend(id, docs) {
   const c = cards[id];
   const panel = document.getElementById('ai-panel');
   panel.className = 'ai-panel show';
-  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
   document.getElementById('ai-panel-head').textContent = 'Enviando a Make.com · ' + c.name;
   document.getElementById('ai-out').textContent = 'Datos enviados a Make.com. Make generará los documentos con IA y los enviará por Gmail automáticamente.';
   document.getElementById('ai-tabs').innerHTML = '';
 
-  const numFactura = 'FAC-2026-' + Math.floor(Math.random()*900+100);
-  const numProforma = 'FP-2026-' + Math.floor(Math.random()*900+100);
+  const numFactura  = 'FAC-2026-' + Math.floor(Math.random()*900+100);
+  const numProforma = 'FP-2026-'  + Math.floor(Math.random()*900+100);
 
   const prompts = {
-    contrato: `Redacta un contrato de servicios artísticos en español para:\n- Transacción: ${c.name}\n- Artista: ${c.artist} (${c.artistEmail})\n- Espacio/Venue: ${c.venue} (${c.email})\n- Fecha del evento: ${c.date}\n- Importe: ${fmt(c.amount)}\n- NIF: ${c.nif} — Dirección fiscal: ${c.address}\nIncluye: partes contratantes, objeto del contrato, caché (base imponible + IVA 21%), condiciones técnicas, forma y plazo de pago, cláusula de resolución, y espacio para firmas. Máximo 280 palabras.`,
-    factura_proforma: `Genera una factura proforma de servicios artísticos en español:\n- Concepto: ${c.name}\n- Cliente: ${c.venue} — NIF: ${c.nif} — Dirección: ${c.address}\n- Email: ${c.email}\n- Fecha evento: ${c.date}\n- Nº Factura Proforma: ${numProforma}\n- Base imponible: ${fmt(c.amount)}\n- IVA: 21%\nIncluye descripción del servicio artístico, desglose fiscal completo (base, IVA, total) y condiciones de pago. Máximo 180 palabras.`,
-    factura: `Genera una factura definitiva de servicios artísticos en español:\n- Concepto: ${c.name}\n- Cliente: ${c.venue} — NIF: ${c.nif} — Dirección: ${c.address}\n- Email: ${c.email}\n- Fecha de emisión: ${new Date().toLocaleDateString('es-ES')}\n- Nº Factura: ${numFactura}\n- Base imponible: ${fmt(c.amount)}\n- IVA: 21%\nIncluye descripción, desglose IVA, total y cierra con "Gracias por confiar en nosotros". Máximo 180 palabras.`
+    contrato: `Redacta un contrato de servicios artísticos en español para:\n- Transacción: ${c.name}\n- Artista: ${c.artist||''} (${c.artistEmail||''})\n- Espacio/Venue: ${c.venue||''} (${c.email||''})\n- Empresa del cliente: ${c.company||c.venue||''}\n- Representante legal: ${c.legalRep||'—'} — DNI: ${c.legalDni||'—'}\n- Fecha del evento: ${c.date||''}\n- Importe: ${fmt(c.amount)}\n- NIF: ${c.nif||''} — Dirección fiscal: ${c.address||''}\nIncluye: partes contratantes (con nombre y DNI del representante legal), objeto del contrato, caché (base imponible + IVA 21%), condiciones técnicas, forma y plazo de pago, cláusula de resolución, y espacio para firmas con nombre y DNI del representante. Máximo 300 palabras.`,
+    factura_proforma: `Genera una factura proforma de servicios artísticos en español:\n- Concepto: ${c.name}\n- Cliente: ${c.company||c.venue||''} — NIF: ${c.nif||''}\n- Dirección fiscal: ${c.address||''}\n- Email: ${c.email||''}\n- Fecha evento: ${c.date||''}\n- Nº Factura Proforma: ${numProforma}\n- Base imponible: ${fmt(c.amount)}\n- IVA: 21%\nIncluye descripción del servicio artístico, datos fiscales del cliente, desglose (base, IVA, total) y condiciones de pago. Máximo 180 palabras.`,
+    factura: `Genera una factura definitiva de servicios artísticos en español:\n- Concepto: ${c.name}\n- Cliente: ${c.company||c.venue||''} — NIF: ${c.nif||''}\n- Dirección fiscal: ${c.address||''}\n- Email: ${c.email||''}\n- Fecha de emisión: ${new Date().toLocaleDateString('es-ES')}\n- Nº Factura: ${numFactura}\n- Base imponible: ${fmt(c.amount)}\n- IVA: 21%\nIncluye descripción, datos fiscales del cliente, desglose IVA, total y cierra con "Gracias por confiar en nosotros". Máximo 180 palabras.`
   };
 
   const emailConfig = {
-    contrato:         { accion: 'contrato_factura_proforma', asunto: c.name,    cuerpo: 'Adjuntamos contrato para su firma y factura proforma.' },
-    factura_proforma: { accion: 'contrato_factura_proforma', asunto: c.name,    cuerpo: 'Adjuntamos contrato para su firma y factura proforma.' },
-    factura:          { accion: 'factura_enviada',           asunto: 'Factura', cuerpo: 'Adjuntamos factura, gracias por todo.' }
+    contrato:         { accion:'contrato_factura_proforma', asunto:c.name,    cuerpo:'Adjuntamos contrato para su firma y factura proforma.' },
+    factura_proforma: { accion:'contrato_factura_proforma', asunto:c.name,    cuerpo:'Adjuntamos contrato para su firma y factura proforma.' },
+    factura:          { accion:'factura_enviada',           asunto:'Factura', cuerpo:'Adjuntamos factura, gracias por todo.' }
   };
 
-  // Enviar TODO a Make.com — Make llama a Claude API y envía el email
   const cfg = emailConfig[docs[0]];
-  const payload = {
+  await sendToMake({
     accion: cfg.accion,
     nombre_transaccion: c.name,
-    email_contacto: c.email,
+    email_contacto: c.email || '',
     email_artista: c.artistEmail || '',
     artista: c.artist || '',
     venue: c.venue || '',
+    empresa: c.company || '',
+    representante_legal: c.legalRep || '',
+    dni_representante: c.legalDni || '',
     fecha: c.date || '',
     importe: fmt(c.amount),
     importe_base: c.amount,
@@ -472,11 +386,9 @@ async function generateAndSend(id, docs) {
     num_proforma: numProforma,
     prompts: Object.fromEntries(docs.map(d => [d, prompts[d]])),
     archivos_adjuntos: c.docs || {}
-  };
+  });
 
-  await sendToMake(payload);
-
-  const labels = { contrato: 'Contrato', factura_proforma: 'Factura proforma', factura: 'Factura' };
+  const labels = { contrato:'Contrato', factura_proforma:'Factura proforma', factura:'Factura' };
   const tabsEl = document.getElementById('ai-tabs');
   docs.forEach((doc, i) => {
     const btn = document.createElement('button');
@@ -490,27 +402,29 @@ async function generateAndSend(id, docs) {
     tabsEl.appendChild(btn);
   });
 
-  document.getElementById('ai-panel-head').textContent = 'Enviado a Make.com · ' + c.email;
-  document.getElementById('ai-out').textContent = results[docs[0]];
-  showToast('Enviado a Make.com', 'Asunto: "' + cfg.asunto + '" → ' + c.email);
+  document.getElementById('ai-panel-head').textContent = 'Enviado a Make.com · ' + (c.email || '');
+  document.getElementById('ai-out').textContent = 'Prompt enviado a Make.com:\n\n' + prompts[docs[0]];
+  showToast('Enviado a Make.com', 'Asunto: "' + cfg.asunto + '" → ' + (c.email || ''));
 }
 
-// ── MODAL ─────────────────────────────────────────────────
 function openModal(id) {
   editId = id;
   const c = cards[id];
   document.getElementById('modal-title').textContent = c.name || 'Ficha';
-  document.getElementById('f-name').value = c.name || '';
-  document.getElementById('f-date').value = c.date || '';
-  document.getElementById('f-amount').value = c.amount || '';
-  document.getElementById('f-artist').value = c.artist || '';
-  document.getElementById('f-venue').value = c.venue || '';
-  document.getElementById('f-email').value = c.email || '';
-  document.getElementById('f-artist-email').value = c.artistEmail || '';
-  document.getElementById('f-phone').value = c.phone || '';
-  document.getElementById('f-nif').value = c.nif || '';
-  document.getElementById('f-address').value = c.address || '';
-  document.getElementById('f-notes').value = c.notes || '';
+  document.getElementById('f-name').value        = c.name       || '';
+  document.getElementById('f-date').value        = c.date       || '';
+  document.getElementById('f-amount').value      = c.amount     || '';
+  document.getElementById('f-artist').value      = c.artist     || '';
+  document.getElementById('f-venue').value       = c.venue      || '';
+  document.getElementById('f-email').value       = c.email      || '';
+  document.getElementById('f-artist-email').value= c.artistEmail|| '';
+  document.getElementById('f-phone').value       = c.phone      || '';
+  document.getElementById('f-company').value     = c.company    || '';
+  document.getElementById('f-nif').value         = c.nif        || '';
+  document.getElementById('f-address').value     = c.address    || '';
+  document.getElementById('f-legal-rep').value   = c.legalRep   || '';
+  document.getElementById('f-legal-dni').value   = c.legalDni   || '';
+  document.getElementById('f-notes').value       = c.notes      || '';
   renderDocGrid(c.docs || emptyDocs());
   document.getElementById('overlay').className = 'overlay open';
 }
@@ -518,34 +432,35 @@ function openModal(id) {
 function newCard(col) {
   editId = 'new:' + (col || COLS[0].id);
   document.getElementById('modal-title').textContent = 'Nueva ficha';
-  ['name','artist','venue','email','artist-email','phone','nif','address','notes'].forEach(f => document.getElementById('f-' + f).value = '');
+  ['name','artist','venue','email','artist-email','phone','company','nif','address','legal-rep','legal-dni','notes'].forEach(f => document.getElementById('f-' + f).value = '');
   document.getElementById('f-amount').value = '';
   document.getElementById('f-date').value = '';
   renderDocGrid(emptyDocs());
   document.getElementById('overlay').className = 'overlay open';
 }
 
-function closeModal() {
-  document.getElementById('overlay').className = 'overlay';
-}
+function closeModal() { document.getElementById('overlay').className = 'overlay'; }
 
 function saveCard() {
   const isNew = editId && editId.startsWith('new:');
-  const col = isNew ? editId.split(':')[1] : cards[editId].col;
-  const id = isNew ? 'c' + (nextId++) : editId;
+  const col   = isNew ? editId.split(':')[1] : cards[editId].col;
+  const id    = isNew ? 'c' + (nextId++) : editId;
   const prevDocs = (!isNew && cards[id]) ? cards[id].docs : emptyDocs();
   cards[id] = {
-    name: document.getElementById('f-name').value,
-    date: document.getElementById('f-date').value,
-    amount: parseFloat(document.getElementById('f-amount').value) || 0,
-    artist: document.getElementById('f-artist').value,
-    venue: document.getElementById('f-venue').value,
-    email: document.getElementById('f-email').value,
+    name:        document.getElementById('f-name').value,
+    date:        document.getElementById('f-date').value,
+    amount:      parseFloat(document.getElementById('f-amount').value) || 0,
+    artist:      document.getElementById('f-artist').value,
+    venue:       document.getElementById('f-venue').value,
+    email:       document.getElementById('f-email').value,
     artistEmail: document.getElementById('f-artist-email').value,
-    phone: document.getElementById('f-phone').value,
-    nif: document.getElementById('f-nif').value,
-    address: document.getElementById('f-address').value,
-    notes: document.getElementById('f-notes').value,
+    phone:       document.getElementById('f-phone').value,
+    company:     document.getElementById('f-company').value,
+    nif:         document.getElementById('f-nif').value,
+    address:     document.getElementById('f-address').value,
+    legalRep:    document.getElementById('f-legal-rep').value,
+    legalDni:    document.getElementById('f-legal-dni').value,
+    notes:       document.getElementById('f-notes').value,
     docs: prevDocs,
     col
   };
@@ -555,15 +470,11 @@ function saveCard() {
 }
 
 function deleteCard() {
-  if (editId && !editId.startsWith('new:')) {
-    delete cards[editId];
-    saveCards();
-  }
+  if (editId && !editId.startsWith('new:')) { delete cards[editId]; saveCards(); }
   closeModal();
   renderAll();
 }
 
-// ── DOC GRID ──────────────────────────────────────────────
 function renderDocGrid(docs) {
   const grid = document.getElementById('doc-grid');
   grid.innerHTML = '';
@@ -581,8 +492,7 @@ function renderDocGrid(docs) {
         <div class="doc-actions">
           ${hasFile
             ? `<button class="doc-btn remove" onclick="removeDoc('${slot.key}')">Quitar</button>`
-            : `<button class="doc-btn upload" onclick="document.getElementById('fi-${slot.key}').click()">Subir</button>`
-          }
+            : `<button class="doc-btn upload" onclick="document.getElementById('fi-${slot.key}').click()">Subir</button>`}
         </div>
       </div>
       <input type="file" id="fi-${slot.key}" style="display:none" accept=".pdf,.doc,.docx,.jpg,.png" onchange="attachDoc('${slot.key}',this)">`;
@@ -593,10 +503,7 @@ function renderDocGrid(docs) {
 function attachDoc(key, input) {
   if (!input.files[0]) return;
   const fname = input.files[0].name;
-  if (editId && !editId.startsWith('new:') && cards[editId]) {
-    cards[editId].docs[key] = fname;
-    saveCards();
-  }
+  if (editId && !editId.startsWith('new:') && cards[editId]) { cards[editId].docs[key] = fname; saveCards(); }
   const span = document.getElementById('dfn-' + key);
   if (span) { span.textContent = fname; span.className = 'doc-filename has'; }
   const btn = input.previousElementSibling?.querySelector('button');
@@ -604,27 +511,23 @@ function attachDoc(key, input) {
 }
 
 function removeDoc(key) {
-  if (editId && !editId.startsWith('new:') && cards[editId]) {
-    cards[editId].docs[key] = null;
-    saveCards();
-  }
+  if (editId && !editId.startsWith('new:') && cards[editId]) { cards[editId].docs[key] = null; saveCards(); }
   const span = document.getElementById('dfn-' + key);
   if (span) { span.textContent = 'Sin archivo'; span.className = 'doc-filename'; }
   const btn = span?.nextElementSibling?.querySelector('button');
   if (btn) { btn.className = 'doc-btn upload'; btn.textContent = 'Subir'; btn.onclick = () => document.getElementById('fi-' + key).click(); }
 }
 
-// ── AUTOCOMPLETE ──────────────────────────────────────────
 function getContactBook() {
   const book = {};
   Object.values(cards).forEach(c => {
     if (c.artist) {
-      const key = c.artist.toLowerCase();
-      if (!book[key]) book[key] = { artist: c.artist, artistEmail: c.artistEmail || '', phone: c.phone || '', label: c.artist };
+      const k = c.artist.toLowerCase();
+      if (!book[k]) book[k] = { artist:c.artist, artistEmail:c.artistEmail||'', phone:c.phone||'', label:c.artist };
     }
     if (c.venue) {
-      const key = '__venue__' + c.venue.toLowerCase();
-      if (!book[key]) book[key] = { venue: c.venue, email: c.email || '', nif: c.nif || '', address: c.address || '', label: c.venue };
+      const k = '__venue__' + c.venue.toLowerCase();
+      if (!book[k]) book[k] = { venue:c.venue, email:c.email||'', company:c.company||'', nif:c.nif||'', address:c.address||'', legalRep:c.legalRep||'', legalDni:c.legalDni||'', label:c.venue };
     }
   });
   return book;
@@ -632,24 +535,13 @@ function getContactBook() {
 
 function autocomplete(input, type) {
   const val = input.value.trim().toLowerCase();
-  const listId = 'ac-' + type;
-  const list = document.getElementById(listId);
+  const list = document.getElementById('ac-' + type);
   if (!val || val.length < 2) { list.style.display = 'none'; return; }
-
   const book = getContactBook();
   const prefix = type === 'venue' ? '__venue__' : '';
-  const matches = Object.entries(book)
-    .filter(([k]) => k.startsWith(prefix) && k.replace(prefix,'').includes(val))
-    .map(([, v]) => v)
-    .slice(0, 6);
-
+  const matches = Object.entries(book).filter(([k]) => k.startsWith(prefix) && k.replace(prefix,'').includes(val)).map(([,v]) => v).slice(0, 6);
   if (!matches.length) { list.style.display = 'none'; return; }
-
-  list.innerHTML = matches.map((m, i) => {
-    const label = m.label;
-    const hi = label.replace(new RegExp('(' + val + ')', 'gi'), '<strong>$1</strong>');
-    return `<div class="autocomplete-item" onmousedown="applyContact(${i}, '${type}')">${hi}</div>`;
-  }).join('');
+  list.innerHTML = matches.map((m, i) => `<div class="autocomplete-item" onmousedown="applyContact(${i},'${type}')">${m.label.replace(new RegExp('('+val+')', 'gi'), '<strong>$1</strong>')}</div>`).join('');
   list._matches = matches;
   list.style.display = 'block';
 }
@@ -661,22 +553,21 @@ function applyContact(i, type) {
   if (type === 'artist') {
     document.getElementById('f-artist').value = m.artist || '';
     if (m.artistEmail) document.getElementById('f-artist-email').value = m.artistEmail;
-    if (m.phone) document.getElementById('f-phone').value = m.phone;
+    if (m.phone)       document.getElementById('f-phone').value = m.phone;
   } else {
-    document.getElementById('f-venue').value = m.venue || '';
-    if (m.email) document.getElementById('f-email').value = m.email;
-    if (m.nif) document.getElementById('f-nif').value = m.nif;
-    if (m.address) document.getElementById('f-address').value = m.address;
+    document.getElementById('f-venue').value   = m.venue   || '';
+    if (m.email)    document.getElementById('f-email').value    = m.email;
+    if (m.company)  document.getElementById('f-company').value  = m.company;
+    if (m.nif)      document.getElementById('f-nif').value      = m.nif;
+    if (m.address)  document.getElementById('f-address').value  = m.address;
+    if (m.legalRep) document.getElementById('f-legal-rep').value= m.legalRep;
+    if (m.legalDni) document.getElementById('f-legal-dni').value= m.legalDni;
   }
   list.style.display = 'none';
 }
 
-function closeAC(type) {
-  const list = document.getElementById('ac-' + type);
-  if (list) list.style.display = 'none';
-}
+function closeAC(type) { const l = document.getElementById('ac-' + type); if (l) l.style.display = 'none'; }
 
-// ── TOAST ─────────────────────────────────────────────────
 let toastTimer;
 function showToast(title, body) {
   document.getElementById('toast-title').textContent = title;
@@ -687,7 +578,6 @@ function showToast(title, body) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 5000);
 }
 
-// ── INIT ──────────────────────────────────────────────────
 buildBoard();
 </script>
 </body>
