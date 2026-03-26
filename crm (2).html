@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM OWL Booking Agency</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5c800;
+  --surface: #e6b800;
+  --surface2: #ffffff;
+  --border: #d4a900;
+  --border2: #c89e00;
+  --text: #1a1200;
+  --text2: #4a3800;
+  --text3: #7a6000;
+  --accent: #1a1200;
+  --accent2: #3a2800;
+  --col1: #555;
+  --col2: #1a6fd4;
+  --col3: #0d9e5e;
+  --col4: #b45309;
+  --col5: #be185d;
+  --col6: #6d28d9;
+  --col7: #c2410c;
+  --col8: #15803d;
+  --col9: #0f766e;
+  --font: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+/* Header */
+.header { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; border-bottom: 1px solid var(--border); background: #1a1200; position: sticky; top: 0; z-index: 10; }
+.logo { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 13px; color: #f5c800; letter-spacing: 0.08em; }
+.logo img { width: 32px; height: 32px; border-radius: 50%; }
+.header-stats { display: flex; gap: 24px; }
+.stat { text-align: right; }
+.stat-val { font-family: var(--mono); font-size: 16px; font-weight: 500; color: #f5c800; }
+.stat-label { font-size: 10px; color: #a08a00; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 1px; }
+.btn-new { font-family: var(--font); font-size: 12px; font-weight: 500; background: #f5c800; color: #1a1200; border: none; border-radius: 6px; padding: 8px 16px; cursor: pointer; letter-spacing: 0.02em; transition: background 0.15s; }
+.btn-new:hover { background: #e6b800; }
+
+/* Board */
+.board-wrap { overflow-x: auto; padding: 20px 28px 40px; }
+.board { display: flex; gap: 14px; align-items: flex-start; min-width: max-content; }
+
+/* Column */
+.col { width: 200px; flex-shrink: 0; }
+.col-head { padding: 10px 12px; margin-bottom: 8px; }
+.col-indicator { width: 20px; height: 3px; border-radius: 2px; margin-bottom: 8px; }
+.col-name { font-size: 10px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; line-height: 1.4; }
+.col-sum { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--text); }
+.col-cnt { font-size: 10px; color: var(--text3); margin-top: 2px; }
+.col-body { background: #e8b800; border: 1px solid var(--border); border-radius: 10px; padding: 8px; min-height: 200px; transition: background 0.15s, border-color 0.15s; }
+.col-body.over { background: #d4a400; border-color: #1a1200; }
+
+/* Card */
+.card { background: #ffffff; border: 1px solid #e0c800; border-radius: 8px; padding: 12px; margin-bottom: 7px; cursor: grab; transition: border-color 0.15s, transform 0.1s, box-shadow 0.15s; user-select: none; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.card:hover { border-color: #c89e00; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+.card:active { cursor: grabbing; transform: scale(0.98); opacity: 0.7; }
+.card.dragging { opacity: 0.3; }
+.card-name { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 5px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-date { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-bottom: 6px; }
+.card-amount { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--accent); }
+.card-footer { display: flex; justify-content: flex-end; margin-top: 8px; }
+.btn-card { font-family: var(--font); font-size: 10px; color: var(--text3); background: none; border: 1px solid var(--border2); border-radius: 5px; padding: 3px 9px; cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+.btn-card:hover { color: var(--text); border-color: #555; }
+
+.add-btn { font-size: 11px; color: var(--text3); text-align: center; padding: 8px; cursor: pointer; border-radius: 6px; transition: color 0.15s, background 0.15s; margin-top: 4px; }
+.add-btn:hover { color: var(--text2); background: var(--surface2); }
+
+/* Modal overlay */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 100; align-items: flex-start; justify-content: center; padding: 40px 20px; overflow-y: auto; }
+.overlay.open { display: flex; }
+
+/* Modal */
+.modal { background: #ffffff; border: 1px solid #d4a900; border-radius: 14px; padding: 24px; width: 100%; max-width: 600px; position: relative; }
+.modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.modal-head h2 { font-size: 15px; font-weight: 500; color: #1a1200; }
+.modal-close { background: none; border: none; color: #7a6000; font-size: 20px; cursor: pointer; line-height: 1; padding: 2px 6px; border-radius: 4px; }
+.modal-close:hover { color: #1a1200; background: #fff8cc; }
+
+.section-label { font-size: 10px; font-weight: 500; color: #7a6000; text-transform: uppercase; letter-spacing: 0.08em; margin: 18px 0 10px; padding-bottom: 6px; border-bottom: 1px solid #e8d060; }
+
+.fg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.f { display: flex; flex-direction: column; gap: 5px; position: relative; }
+.f.full { grid-column: 1 / -1; }
+.f label { font-size: 10px; color: #7a6000; text-transform: uppercase; letter-spacing: 0.06em; }
+.f input, .f textarea, .f select {
+  font-family: var(--font); font-size: 13px; color: #1a1200;
+  background: #fffde8; border: 1px solid #d4b800;
+  border-radius: 7px; padding: 8px 10px; width: 100%;
+  transition: border-color 0.15s;
+}
+.f input:focus, .f textarea:focus { outline: none; border-color: #1a1200; }
+.f textarea { resize: vertical; min-height: 60px; }
+
+/* Autocomplete */
+.autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #d4b800; border-top: none; border-radius: 0 0 7px 7px; z-index: 200; max-height: 160px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+.autocomplete-item { padding: 8px 10px; font-size: 12px; color: #1a1200; cursor: pointer; border-bottom: 1px solid #f0e060; }
+.autocomplete-item:last-child { border-bottom: none; }
+.autocomplete-item:hover { background: #fff8cc; }
+.autocomplete-item strong { color: #b45309; }
+
+/* Doc slots */
+.doc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.doc-slot { background: #fffde8; border: 1px solid #d4b800; border-radius: 8px; padding: 10px 12px; }
+.doc-slot-top { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
+.doc-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.doc-slot-name { font-size: 11px; font-weight: 500; color: #4a3800; }
+.doc-slot-bottom { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.doc-filename { font-family: var(--mono); font-size: 10px; color: #7a6000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px; }
+.doc-filename.has { color: #15803d; font-weight: 500; }
+.doc-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.doc-btn { font-family: var(--font); font-size: 9px; padding: 3px 8px; border-radius: 4px; border: 1px solid #d4b800; background: none; cursor: pointer; color: #7a6000; transition: all 0.15s; }
+.doc-btn.upload { border-color: #1a6fd4; color: #1a6fd4; }
+.doc-btn.upload:hover { background: #e8f0ff; }
+.doc-btn.remove { border-color: #ef4444; color: #ef4444; }
+.doc-btn.remove:hover { background: #fff0f0; }
+
+/* Modal footer */
+.modal-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 22px; padding-top: 16px; border-top: 1px solid #e8d060; }
+.modal-foot-r { display: flex; gap: 8px; }
+.btn { font-family: var(--font); font-size: 12px; padding: 8px 16px; border-radius: 7px; border: 1px solid #d4b800; background: none; cursor: pointer; color: #4a3800; transition: all 0.15s; }
+.btn:hover { color: #1a1200; border-color: #1a1200; background: #fff8cc; }
+.btn.primary { background: #1a1200; color: #f5c800; border-color: #1a1200; font-weight: 500; }
+.btn.primary:hover { background: #3a2800; }
+.btn.danger { border-color: #ef4444; color: #ef4444; }
+.btn.danger:hover { background: #fff0f0; }
+
+/* AI panel */
+.ai-panel { margin-top: 16px; background: #1a1200; border: 1px solid #3a2800; border-radius: 10px; padding: 14px; display: none; }
+.ai-panel.show { display: block; }
+.ai-panel-head { font-size: 10px; color: #f5c800; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+.ai-tabs { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+.atab { font-family: var(--font); font-size: 10px; padding: 4px 12px; border-radius: 99px; border: 1px solid #3a2800; background: none; cursor: pointer; color: #a08a00; transition: all 0.15s; }
+.atab.on { background: #f5c800; color: #1a1200; border-color: #f5c800; }
+.ai-out { font-family: var(--mono); font-size: 11px; line-height: 1.7; color: #c8aa40; white-space: pre-wrap; max-height: 240px; overflow-y: auto; }
+
+/* Notification */
+.toast { position: fixed; bottom: 24px; right: 24px; background: #1a1200; border: 1px solid #3a2800; border-radius: 10px; padding: 14px 18px; max-width: 320px; z-index: 999; transform: translateY(20px); opacity: 0; transition: all 0.25s; pointer-events: none; }
+.toast.show { transform: translateY(0); opacity: 1; pointer-events: all; }
+.toast-icon { width: 8px; height: 8px; border-radius: 50%; background: #f5c800; display: inline-block; margin-right: 8px; }
+.toast-title { font-size: 12px; font-weight: 500; color: #f5c800; margin-bottom: 4px; }
+.toast-body { font-size: 11px; color: #a08a00; line-height: 1.5; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d4b800; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <img src="data:image/png;base64,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" alt="OWL" onerror="this.style.display='none'">
+    CRM OWL BOOKING AGENCY
+  </div>
+  <div class="header-stats">
+    <div class="stat">
+      <div class="stat-val" id="total-fichas">0</div>
+      <div class="stat-label">Fichas</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="total-pipeline">€ 0</div>
+      <div class="stat-label">Pipeline total</div>
+    </div>
+  </div>
+  <button class="btn-new" onclick="newCard(null)">+ Nueva ficha</button>
+</div>
+
+<div class="board-wrap">
+  <div class="board" id="board"></div>
+</div>
+
+<div class="ai-panel" id="ai-panel">
+  <div class="ai-panel-head" id="ai-panel-head">Generando documentos...</div>
+  <div class="ai-tabs" id="ai-tabs"></div>
+  <div class="ai-out" id="ai-out"></div>
+</div>
+
+<!-- Modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modal-title">Ficha</h2>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+
+    <div class="section-label">Información general</div>
+    <div class="fg">
+      <div class="f full"><label>Nombre de la transacción</label><input id="f-name" type="text" placeholder="Ej: The Jazz Collective – Razzmatazz"></div>
+      <div class="f"><label>Fecha de prestación</label><input id="f-date" type="date"></div>
+      <div class="f"><label>Importe (€)</label><input id="f-amount" type="number" step="0.01" placeholder="0.00"></div>
+    </div>
+
+    <div class="section-label">Artista & Espacio</div>
+    <div class="fg">
+      <div class="f"><label>Artista / Grupo</label><input id="f-artist" type="text" placeholder="Nombre del artista" oninput="autocomplete(this,'artist')" onblur="setTimeout(()=>closeAC('artist'),200)" autocomplete="off"><div class="autocomplete-list" id="ac-artist" style="display:none"></div></div>
+      <div class="f"><label>Espacio / Venue</label><input id="f-venue" type="text" placeholder="Nombre del espacio" oninput="autocomplete(this,'venue')" onblur="setTimeout(()=>closeAC('venue'),200)" autocomplete="off"><div class="autocomplete-list" id="ac-venue" style="display:none"></div></div>
+      <div class="f"><label>Email artista</label><input id="f-artist-email" type="email" placeholder="artista@mail.com"></div>
+      <div class="f"><label>Email contacto (venue)</label><input id="f-email" type="email" placeholder="venue@mail.com"></div>
+      <div class="f"><label>Teléfono</label><input id="f-phone" type="tel" placeholder="+34 600 000 000"></div>
+    </div>
+
+    <div class="section-label">Datos fiscales</div>
+    <div class="fg">
+      <div class="f"><label>NIF / CIF</label><input id="f-nif" type="text" placeholder="B12345678"></div>
+      <div class="f full"><label>Dirección fiscal</label><input id="f-address" type="text" placeholder="C/ Nombre, Número, Ciudad"></div>
+    </div>
+
+    <div class="section-label">Notas</div>
+    <div class="fg">
+      <div class="f full"><textarea id="f-notes" placeholder="Observaciones, rider técnico, condiciones especiales..."></textarea></div>
+    </div>
+
+    <div class="section-label">Documentos</div>
+    <div class="doc-grid" id="doc-grid"></div>
+
+    <div class="modal-foot">
+      <button class="btn danger" onclick="deleteCard()">Eliminar ficha</button>
+      <div class="modal-foot-r">
+        <button class="btn" onclick="closeModal()">Cancelar</button>
+        <button class="btn primary" onclick="saveCard()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <div class="toast-title"><span class="toast-icon"></span><span id="toast-title"></span></div>
+  <div class="toast-body" id="toast-body"></div>
+</div>
+
+<script>
+const COLS = [
+  { id:'artista',          label:'Artista y Espacio',           color:'var(--col1)' },
+  { id:'oferta_enviada',   label:'Oferta Enviada',              color:'var(--col2)' },
+  { id:'oferta_aceptada',  label:'Oferta Aceptada',             color:'var(--col3)' },
+  { id:'contrato_factura', label:'Contrato y Factura Proforma', color:'var(--col4)' },
+  { id:'rider',            label:'Rider, Hospitality y EPK',    color:'var(--col5)' },
+  { id:'hoja_ruta',        label:'Hoja de Ruta',                color:'var(--col6)' },
+  { id:'factura_enviada',  label:'Factura Enviada',             color:'var(--col7)' },
+  { id:'factura_cobrada',  label:'Factura Cobrada',             color:'var(--col8)' },
+  { id:'factura_pagada',   label:'Factura Pagada',              color:'var(--col9)' }
+];
+
+const DOC_SLOTS = [
+  { key:'contrato',        label:'Contrato',         color:'#4a9eff' },
+  { key:'factura_proforma',label:'Factura proforma',  color:'#f59e0b' },
+  { key:'rider',           label:'Rider',             color:'#ec4899' },
+  { key:'hospitality',     label:'Hospitality',       color:'#ec4899' },
+  { key:'epk',             label:'EPK',               color:'#ec4899' },
+  { key:'hoja_ruta',       label:'Hoja de Ruta',      color:'#8b5cf6' },
+  { key:'factura',         label:'Factura',           color:'#f97316' }
+];
+
+function emptyDocs() {
+  const d = {};
+  DOC_SLOTS.forEach(s => d[s.key] = null);
+  return d;
+}
+
+function fmt(n) {
+  return '€ ' + (n||0).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+// Load data from localStorage or use defaults
+function loadCards() {
+  try {
+    const saved = localStorage.getItem('crm_cards');
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return {
+    'c1': { name:'The Jazz Collective – Razzmatazz', date:'2026-04-12', amount:3500, artist:'The Jazz Collective', venue:'Razzmatazz', email:'booking@razzmatazz.es', artistEmail:'manager@jazzc.com', phone:'+34 932 001 122', nif:'B12345678', address:'C/ Pamplona 88, Barcelona', notes:'Catering incluido', docs:{...emptyDocs(), rider:'rider.pdf', epk:'epk.pdf'}, col:'artista' },
+    'c2': { name:'Marta Soto – Sala Apolo', date:'2026-05-03', amount:1800, artist:'Marta Soto', venue:'Sala Apolo', email:'produccion@apolo.es', artistEmail:'marta@soto.com', phone:'+34 934 412 040', nif:'A98765432', address:'C/ Nou de la Rambla 113', notes:'', docs:emptyDocs(), col:'oferta_enviada' },
+    'c3': { name:'DJ Forma – Nitsa Club', date:'2026-04-20', amount:2200, artist:'DJ Forma', venue:'Nitsa Club', email:'info@nitsa.com', artistEmail:'djforma@mail.com', phone:'+34 933 178 600', nif:'C11223344', address:'C/ Nou de la Rambla 113', notes:'Equipo propio', docs:{...emptyDocs(), rider:'rider_djforma.pdf', hospitality:'hospitality.pdf'}, col:'contrato_factura' },
+    'c4': { name:'Los Tsunamis – BARTS', date:'2026-06-01', amount:4800, artist:'Los Tsunamis', venue:'BARTS', email:'barts@barts.cat', artistEmail:'tsunamis@mgmt.com', phone:'+34 933 240 740', nif:'B55443322', address:'Av. Paral·lel 62, Barcelona', notes:'', docs:{...emptyDocs(), hoja_ruta:'hoja_ruta.pdf'}, col:'factura_cobrada' }
+  };
+}
+
+function saveCards() {
+  try { localStorage.setItem('crm_cards', JSON.stringify(cards)); } catch(e) {}
+}
+
+let cards = loadCards();
+let nextId = Object.keys(cards).length + 1;
+let editId = null;
+let dragId = null;
+
+// ── BUILD BOARD ──────────────────────────────────────────
+function buildBoard() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  COLS.forEach(col => {
+    const div = document.createElement('div');
+    div.className = 'col';
+    div.innerHTML = `
+      <div class="col-head">
+        <div class="col-indicator" style="background:${col.color}"></div>
+        <div class="col-name">${col.label}</div>
+        <div class="col-sum" id="sum-${col.id}">€ 0</div>
+        <div class="col-cnt" id="cnt-${col.id}">0 fichas</div>
+      </div>
+      <div class="col-body" id="body-${col.id}"
+        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragleave="this.classList.remove('over')"
+        ondrop="onDrop(event,'${col.id}')">
+      </div>
+      <div class="add-btn" onclick="newCard('${col.id}')">+ Añadir ficha</div>`;
+    board.appendChild(div);
+  });
+  renderAll();
+}
+
+function renderAll() {
+  COLS.forEach(col => {
+    const body = document.getElementById('body-' + col.id);
+    body.innerHTML = '';
+    let sum = 0, count = 0;
+    Object.entries(cards).forEach(([id, c]) => {
+      if (c.col !== col.id) return;
+      sum += c.amount || 0; count++;
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.draggable = true;
+      card.dataset.id = id;
+      card.ondragstart = e => { dragId = id; card.classList.add('dragging'); };
+      card.ondragend = () => { card.classList.remove('dragging'); document.querySelectorAll('.col-body').forEach(b => b.classList.remove('over')); };
+      const dateStr = c.date ? new Date(c.date + 'T12:00:00').toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric' }) : '—';
+      card.innerHTML = `
+        <div class="card-name">${c.name || 'Sin nombre'}</div>
+        <div class="card-date">${dateStr}</div>
+        <div class="card-amount">${fmt(c.amount)}</div>
+        <div class="card-footer"><button class="btn-card" onclick="openModal('${id}')">Ver ficha</button></div>`;
+      body.appendChild(card);
+    });
+    document.getElementById('sum-' + col.id).textContent = fmt(sum);
+    document.getElementById('cnt-' + col.id).textContent = count + ' ficha' + (count !== 1 ? 's' : '');
+  });
+  updateHeader();
+}
+
+function updateHeader() {
+  let total = 0, count = 0;
+  Object.values(cards).forEach(c => { total += c.amount || 0; count++; });
+  document.getElementById('total-fichas').textContent = count;
+  document.getElementById('total-pipeline').textContent = fmt(total);
+}
+
+// ── DRAG & DROP ───────────────────────────────────────────
+function onDrop(e, toCol) {
+  e.preventDefault();
+  document.getElementById('body-' + toCol).classList.remove('over');
+  if (!dragId) return;
+  const c = cards[dragId];
+  const fromCol = c.col;
+  if (fromCol === toCol) { dragId = null; return; }
+  c.col = toCol;
+  saveCards();
+  renderAll();
+  triggerAutomation(dragId, toCol);
+  dragId = null;
+}
+
+// ── AUTOMATION ────────────────────────────────────────────
+function triggerAutomation(id, col) {
+  const c = cards[id];
+  if (col === 'contrato_factura') generateAndSend(id, ['contrato', 'factura_proforma']);
+  else if (col === 'rider') showToast('Email enviado', 'Para: ' + c.email + '\nAsunto: "Rider, Hospitality y EPK"\nAdjuntos: Rider, Hospitality y EPK');
+  else if (col === 'hoja_ruta') showToast('Email enviado', 'Para: ' + (c.artistEmail||c.email) + '\nAsunto: "Hoja de Ruta"\nAdjunto: Hoja de Ruta');
+  else if (col === 'factura_enviada') generateAndSend(id, ['factura']);
+}
+
+async function generateAndSend(id, docs) {
+  const c = cards[id];
+  const panel = document.getElementById('ai-panel');
+  panel.className = 'ai-panel show';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  document.getElementById('ai-panel-head').textContent = 'Generando documentos para ' + c.name + '...';
+  document.getElementById('ai-out').textContent = 'Consultando IA...';
+  document.getElementById('ai-tabs').innerHTML = '';
+
+  const prompts = {
+    contrato: `Redacta un contrato de servicios artísticos en español para:\n- Transacción: ${c.name}\n- Artista: ${c.artist} (${c.artistEmail})\n- Espacio/Venue: ${c.venue} (${c.email})\n- Fecha del evento: ${c.date}\n- Importe: ${fmt(c.amount)}\n- NIF: ${c.nif} — Dirección fiscal: ${c.address}\nIncluye: partes contratantes, objeto del contrato, caché (base imponible + IVA 21%), condiciones técnicas, forma y plazo de pago, cláusula de resolución, y espacio para firmas. Máximo 280 palabras.`,
+    factura_proforma: `Genera una factura proforma de servicios artísticos en español:\n- Concepto: ${c.name}\n- Cliente: ${c.venue} — NIF: ${c.nif} — Dirección: ${c.address}\n- Email: ${c.email}\n- Fecha evento: ${c.date}\n- Nº Factura Proforma: FP-2026-${Math.floor(Math.random()*900+100)}\n- Base imponible: ${fmt(c.amount)}\n- IVA: 21%\nIncluye descripción del servicio artístico, desglose fiscal completo (base, IVA, total) y condiciones de pago. Máximo 180 palabras.`,
+    factura: `Genera una factura definitiva de servicios artísticos en español:\n- Concepto: ${c.name}\n- Cliente: ${c.venue} — NIF: ${c.nif} — Dirección: ${c.address}\n- Email: ${c.email}\n- Fecha de emisión: ${new Date().toLocaleDateString('es-ES')}\n- Nº Factura: FAC-2026-${Math.floor(Math.random()*900+100)}\n- Base imponible: ${fmt(c.amount)}\n- IVA: 21%\nIncluye descripción, desglose IVA, total y cierra con "Gracias por confiar en nosotros". Máximo 180 palabras.`
+  };
+
+  const emailInfo = {
+    contrato: { subj: c.name, body: 'Adjuntamos contrato para su firma y factura proforma.' },
+    factura_proforma: { subj: c.name, body: 'Adjuntamos contrato para su firma y factura proforma.' },
+    factura: { subj: 'Factura', body: 'Adjuntamos factura, gracias por todo.' }
+  };
+
+  const results = {};
+  for (const doc of docs) {
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompts[doc] }] })
+      });
+      const json = await res.json();
+      results[doc] = json.content ? json.content.map(b => b.text || '').join('') : 'Error: ' + JSON.stringify(json);
+    } catch(e) { results[doc] = 'Error al conectar con la IA. Verifica la API key.'; }
+  }
+
+  const labels = { contrato: 'Contrato', factura_proforma: 'Factura proforma', factura: 'Factura' };
+  const tabsEl = document.getElementById('ai-tabs');
+  docs.forEach((doc, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'atab' + (i === 0 ? ' on' : '');
+    btn.textContent = labels[doc];
+    btn.onclick = () => { document.querySelectorAll('.atab').forEach(t => t.classList.remove('on')); btn.classList.add('on'); document.getElementById('ai-out').textContent = results[doc]; };
+    tabsEl.appendChild(btn);
+  });
+
+  document.getElementById('ai-panel-head').textContent = 'Documentos generados · Enviando a ' + c.email;
+  document.getElementById('ai-out').textContent = results[docs[0]];
+  const info = emailInfo[docs[0]];
+  showToast('Email enviado a ' + c.email, 'Asunto: "' + info.subj + '"\n' + info.body);
+}
+
+// ── MODAL ─────────────────────────────────────────────────
+function openModal(id) {
+  editId = id;
+  const c = cards[id];
+  document.getElementById('modal-title').textContent = c.name || 'Ficha';
+  document.getElementById('f-name').value = c.name || '';
+  document.getElementById('f-date').value = c.date || '';
+  document.getElementById('f-amount').value = c.amount || '';
+  document.getElementById('f-artist').value = c.artist || '';
+  document.getElementById('f-venue').value = c.venue || '';
+  document.getElementById('f-email').value = c.email || '';
+  document.getElementById('f-artist-email').value = c.artistEmail || '';
+  document.getElementById('f-phone').value = c.phone || '';
+  document.getElementById('f-nif').value = c.nif || '';
+  document.getElementById('f-address').value = c.address || '';
+  document.getElementById('f-notes').value = c.notes || '';
+  renderDocGrid(c.docs || emptyDocs());
+  document.getElementById('overlay').className = 'overlay open';
+}
+
+function newCard(col) {
+  editId = 'new:' + (col || COLS[0].id);
+  document.getElementById('modal-title').textContent = 'Nueva ficha';
+  ['name','artist','venue','email','artist-email','phone','nif','address','notes'].forEach(f => document.getElementById('f-' + f).value = '');
+  document.getElementById('f-amount').value = '';
+  document.getElementById('f-date').value = '';
+  renderDocGrid(emptyDocs());
+  document.getElementById('overlay').className = 'overlay open';
+}
+
+function closeModal() {
+  document.getElementById('overlay').className = 'overlay';
+}
+
+function saveCard() {
+  const isNew = editId && editId.startsWith('new:');
+  const col = isNew ? editId.split(':')[1] : cards[editId].col;
+  const id = isNew ? 'c' + (nextId++) : editId;
+  const prevDocs = (!isNew && cards[id]) ? cards[id].docs : emptyDocs();
+  cards[id] = {
+    name: document.getElementById('f-name').value,
+    date: document.getElementById('f-date').value,
+    amount: parseFloat(document.getElementById('f-amount').value) || 0,
+    artist: document.getElementById('f-artist').value,
+    venue: document.getElementById('f-venue').value,
+    email: document.getElementById('f-email').value,
+    artistEmail: document.getElementById('f-artist-email').value,
+    phone: document.getElementById('f-phone').value,
+    nif: document.getElementById('f-nif').value,
+    address: document.getElementById('f-address').value,
+    notes: document.getElementById('f-notes').value,
+    docs: prevDocs,
+    col
+  };
+  saveCards();
+  closeModal();
+  renderAll();
+}
+
+function deleteCard() {
+  if (editId && !editId.startsWith('new:')) {
+    delete cards[editId];
+    saveCards();
+  }
+  closeModal();
+  renderAll();
+}
+
+// ── DOC GRID ──────────────────────────────────────────────
+function renderDocGrid(docs) {
+  const grid = document.getElementById('doc-grid');
+  grid.innerHTML = '';
+  DOC_SLOTS.forEach(slot => {
+    const hasFile = docs && docs[slot.key];
+    const div = document.createElement('div');
+    div.className = 'doc-slot';
+    div.innerHTML = `
+      <div class="doc-slot-top">
+        <div class="doc-dot" style="background:${slot.color}"></div>
+        <span class="doc-slot-name">${slot.label}</span>
+      </div>
+      <div class="doc-slot-bottom">
+        <span class="doc-filename ${hasFile ? 'has' : ''}" id="dfn-${slot.key}">${hasFile ? docs[slot.key] : 'Sin archivo'}</span>
+        <div class="doc-actions">
+          ${hasFile
+            ? `<button class="doc-btn remove" onclick="removeDoc('${slot.key}')">Quitar</button>`
+            : `<button class="doc-btn upload" onclick="document.getElementById('fi-${slot.key}').click()">Subir</button>`
+          }
+        </div>
+      </div>
+      <input type="file" id="fi-${slot.key}" style="display:none" accept=".pdf,.doc,.docx,.jpg,.png" onchange="attachDoc('${slot.key}',this)">`;
+    grid.appendChild(div);
+  });
+}
+
+function attachDoc(key, input) {
+  if (!input.files[0]) return;
+  const fname = input.files[0].name;
+  if (editId && !editId.startsWith('new:') && cards[editId]) {
+    cards[editId].docs[key] = fname;
+    saveCards();
+  }
+  const span = document.getElementById('dfn-' + key);
+  if (span) { span.textContent = fname; span.className = 'doc-filename has'; }
+  const btn = input.previousElementSibling?.querySelector('button');
+  if (btn) { btn.className = 'doc-btn remove'; btn.textContent = 'Quitar'; btn.onclick = () => removeDoc(key); }
+}
+
+function removeDoc(key) {
+  if (editId && !editId.startsWith('new:') && cards[editId]) {
+    cards[editId].docs[key] = null;
+    saveCards();
+  }
+  const span = document.getElementById('dfn-' + key);
+  if (span) { span.textContent = 'Sin archivo'; span.className = 'doc-filename'; }
+  const btn = span?.nextElementSibling?.querySelector('button');
+  if (btn) { btn.className = 'doc-btn upload'; btn.textContent = 'Subir'; btn.onclick = () => document.getElementById('fi-' + key).click(); }
+}
+
+// ── AUTOCOMPLETE ──────────────────────────────────────────
+function getContactBook() {
+  const book = {};
+  Object.values(cards).forEach(c => {
+    if (c.artist) {
+      const key = c.artist.toLowerCase();
+      if (!book[key]) book[key] = { artist: c.artist, artistEmail: c.artistEmail || '', phone: c.phone || '', label: c.artist };
+    }
+    if (c.venue) {
+      const key = '__venue__' + c.venue.toLowerCase();
+      if (!book[key]) book[key] = { venue: c.venue, email: c.email || '', nif: c.nif || '', address: c.address || '', label: c.venue };
+    }
+  });
+  return book;
+}
+
+function autocomplete(input, type) {
+  const val = input.value.trim().toLowerCase();
+  const listId = 'ac-' + type;
+  const list = document.getElementById(listId);
+  if (!val || val.length < 2) { list.style.display = 'none'; return; }
+
+  const book = getContactBook();
+  const prefix = type === 'venue' ? '__venue__' : '';
+  const matches = Object.entries(book)
+    .filter(([k]) => k.startsWith(prefix) && k.replace(prefix,'').includes(val))
+    .map(([, v]) => v)
+    .slice(0, 6);
+
+  if (!matches.length) { list.style.display = 'none'; return; }
+
+  list.innerHTML = matches.map((m, i) => {
+    const label = m.label;
+    const hi = label.replace(new RegExp('(' + val + ')', 'gi'), '<strong>$1</strong>');
+    return `<div class="autocomplete-item" onmousedown="applyContact(${i}, '${type}')">${hi}</div>`;
+  }).join('');
+  list._matches = matches;
+  list.style.display = 'block';
+}
+
+function applyContact(i, type) {
+  const list = document.getElementById('ac-' + type);
+  const m = list._matches[i];
+  if (!m) return;
+  if (type === 'artist') {
+    document.getElementById('f-artist').value = m.artist || '';
+    if (m.artistEmail) document.getElementById('f-artist-email').value = m.artistEmail;
+    if (m.phone) document.getElementById('f-phone').value = m.phone;
+  } else {
+    document.getElementById('f-venue').value = m.venue || '';
+    if (m.email) document.getElementById('f-email').value = m.email;
+    if (m.nif) document.getElementById('f-nif').value = m.nif;
+    if (m.address) document.getElementById('f-address').value = m.address;
+  }
+  list.style.display = 'none';
+}
+
+function closeAC(type) {
+  const list = document.getElementById('ac-' + type);
+  if (list) list.style.display = 'none';
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+let toastTimer;
+function showToast(title, body) {
+  document.getElementById('toast-title').textContent = title;
+  document.getElementById('toast-body').textContent = body;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 5000);
+}
+
+// ── INIT ──────────────────────────────────────────────────
+buildBoard();
+</script>
+</body>
+</html>
