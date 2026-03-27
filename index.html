@@ -324,12 +324,12 @@ async function sendToMake(payload) {
   } catch(e) { console.warn('Make.com webhook error:', e); }
 }
 
-// CORRECCIÓN APLICADA AQUÍ (Función triggerAutomation)
+// CORRECCIÓN DEFINITIVA DE URLS DE FIREBASE APLICADA AQUÍ
 function triggerAutomation(id, col) {
   const c = cards[id];
   
-  // Función auxiliar para generar URL de Firebase
-  const getUrl = (name) => name ? `https://firebasestorage.googleapis.com/v0/b/crm-owl.appspot.com/o/uploads%2F${encodeURIComponent(name)}?alt=media` : null;
+  // Función para construir la URL pública de descarga de Firebase
+  const getUrl = (name) => name ? `https://firebasestorage.googleapis.com/v0/b/crm-owl.appspot.com/o/${encodeURIComponent(name)}?alt=media` : null;
 
   if (col === 'contrato_factura') generateAndSend(id, ['contrato','factura_proforma']);
   else if (col === 'rider') {
@@ -349,7 +349,7 @@ function triggerAutomation(id, col) {
         epk: getUrl(c.docs.epk) 
       } 
     });
-    showToast('Enviando a Make.com', 'Rider, Hospitality y EPK → ' + c.email);
+    showToast('Enviando a Make.com', 'Archivos técnicos → ' + c.email);
   }
   else if (col === 'hoja_ruta') {
     sendToMake({ 
@@ -376,29 +376,27 @@ async function generateAndSend(id, docs) {
   const panel = document.getElementById('ai-panel');
   panel.className = 'ai-panel show';
   panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
-  document.getElementById('ai-panel-head').textContent = 'Enviando a Make.com · ' + c.name;
-  document.getElementById('ai-out').textContent = 'Datos enviados a Make.com. Make generará los documentos con IA y los enviará por Gmail automáticamente.';
+  document.getElementById('ai-panel-head').textContent = 'Procesando en Make.com · ' + c.name;
+  document.getElementById('ai-out').textContent = 'Enviando datos... Make generará los documentos y los enviará automáticamente.';
   document.getElementById('ai-tabs').innerHTML = '';
 
   const numFactura  = 'FAC-2026-' + Math.floor(Math.random()*900+100);
   const numProforma = 'FP-2026-'  + Math.floor(Math.random()*900+100);
 
   const prompts = {
-    contrato: `Redacta un contrato de servicios artísticos en español para:\n- Transacción: ${c.name}\n- Artista: ${c.artist||''} (${c.artistEmail||''})\n- Espacio/Venue: ${c.venue||''} (${c.email||''})\n- Empresa del cliente: ${c.company||c.venue||''}\n- Representante legal: ${c.legalRep||'—'} — DNI: ${c.legalDni||'—'}\n- Fecha del evento: ${c.date||''}\n- Importe: ${fmt(c.amount)}\n- NIF: ${c.nif||''} — Dirección fiscal: ${c.address||''}\nIncluye: partes contratantes (con nombre y DNI del representante legal), objeto del contrato, caché (base imponible + IVA 21%), condiciones técnicas, forma y plazo de pago, cláusula de resolución, y espacio para firmas con nombre y DNI del representante. Máximo 300 palabras.`,
-    factura_proforma: `Genera una factura proforma de servicios artísticos en español:\n- Concepto: ${c.name}\n- Cliente: ${c.company||c.venue||''} — NIF: ${c.nif||''}\n- Dirección fiscal: ${c.address||''}\n- Email: ${c.email||''}\n- Fecha evento: ${c.date||''}\n- Nº Factura Proforma: ${numProforma}\n- Base imponible: ${fmt(c.amount)}\n- IVA: 21%\nIncluye descripción del servicio artístico, datos fiscales del cliente, desglose (base, IVA, total) y condiciones de pago. Máximo 180 palabras.`,
-    factura: `Genera una factura definitiva de servicios artísticos en español:\n- Concepto: ${c.name}\n- Cliente: ${c.company||c.venue||''} — NIF: ${c.nif||''}\n- Dirección fiscal: ${c.address||''}\n- Email: ${c.email||''}\n- Fecha de emisión: ${new Date().toLocaleDateString('es-ES')}\n- Nº Factura: ${numFactura}\n- Base imponible: ${fmt(c.amount)}\n- IVA: 21%\nIncluye descripción, datos fiscales del cliente, desglose IVA, total y cierra con "Gracias por confiar en nosotros". Máximo 180 palabras.`
+    contrato: `Redacta un contrato de servicios artísticos en español para:\n- Transacción: ${c.name}\n- Artista: ${c.artist||''} (${c.artistEmail||''})\n- Espacio/Venue: ${c.venue||''} (${c.email||''})\n- Empresa: ${c.company||c.venue||''}\n- Representante: ${c.legalRep||'—'} — DNI: ${c.legalDni||'—'}\n- Fecha: ${c.date||''}\n- Importe: ${fmt(c.amount)}\n- NIF: ${c.nif||''} — Dirección: ${c.address||''}`,
+    factura_proforma: `Genera una factura proforma en español:\n- Concepto: ${c.name}\n- Cliente: ${c.company||c.venue||''} — NIF: ${c.nif||''}\n- Importe: ${fmt(c.amount)} + 21% IVA\n- Nº Proforma: ${numProforma}`,
+    factura: `Genera una factura definitiva en español:\n- Concepto: ${c.name}\n- Cliente: ${c.company||c.venue||''} — NIF: ${c.nif||''}\n- Nº Factura: ${numFactura}\n- Importe: ${fmt(c.amount)} + 21% IVA`
   };
 
   const emailConfig = {
-    contrato:         { accion:'contrato_factura_proforma', asunto:c.name,    cuerpo:'Adjuntamos contrato para su firma y factura proforma.' },
-    factura_proforma: { accion:'contrato_factura_proforma', asunto:c.name,    cuerpo:'Adjuntamos contrato para su firma y factura proforma.' },
-    factura:          { accion:'factura_enviada',           asunto:'Factura', cuerpo:'Adjuntamos factura, gracias por todo.' }
+    contrato:         { accion:'contrato_factura_proforma', asunto:c.name,    cuerpo:'Adjuntamos contrato y proforma.' },
+    factura_proforma: { accion:'contrato_factura_proforma', asunto:c.name,    cuerpo:'Adjuntamos contrato y proforma.' },
+    factura:          { accion:'factura_enviada',           asunto:'Factura', cuerpo:'Adjuntamos factura final.' }
   };
 
   const cfg = emailConfig[docs[0]];
-  
-  // Función auxiliar para generar URL de Firebase
-  const getUrl = (name) => name ? `https://firebasestorage.googleapis.com/v0/b/crm-owl.appspot.com/o/uploads%2F${encodeURIComponent(name)}?alt=media` : null;
+  const getUrl = (name) => name ? `https://firebasestorage.googleapis.com/v0/b/crm-owl.appspot.com/o/${encodeURIComponent(name)}?alt=media` : null;
 
   await sendToMake({
     accion: cfg.accion,
@@ -433,7 +431,7 @@ async function generateAndSend(id, docs) {
     }
   });
 
-  const labels = { contrato:'Contrato', factura_proforma:'Factura proforma', factura:'Factura' };
+  const labels = { contrato:'Contrato', factura_proforma:'Proforma', factura:'Factura' };
   const tabsEl = document.getElementById('ai-tabs');
   docs.forEach((doc, i) => {
     const btn = document.createElement('button');
@@ -442,14 +440,13 @@ async function generateAndSend(id, docs) {
     btn.onclick = () => {
       document.querySelectorAll('.atab').forEach(t => t.classList.remove('on'));
       btn.classList.add('on');
-      document.getElementById('ai-out').textContent = 'Prompt enviado a Make.com:\n\n' + prompts[doc];
+      document.getElementById('ai-out').textContent = 'Detalle enviado:\n\n' + prompts[doc];
     };
     tabsEl.appendChild(btn);
   });
 
-  document.getElementById('ai-panel-head').textContent = 'Enviado a Make.com · ' + (c.email || '');
-  document.getElementById('ai-out').textContent = 'Prompt enviado a Make.com:\n\n' + prompts[docs[0]];
-  showToast('Enviado a Make.com', 'Asunto: "' + cfg.asunto + '" → ' + (c.email || ''));
+  document.getElementById('ai-out').textContent = 'Información enviada a Make correctamente.';
+  showToast('Enviado a Make.com', 'Destinatario: ' + (c.email || ''));
 }
 
 function openModal(id) {
