@@ -68,6 +68,11 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 .f input, .f textarea { font-family: var(--font); font-size: 13px; color: #1a1200; background: #fffde8; border: 1px solid #d4b800; border-radius: 7px; padding: 8px 10px; width: 100%; transition: border-color 0.15s; }
 .f input:focus, .f textarea:focus { outline: none; border-color: #1a1200; }
 .f textarea { resize: vertical; min-height: 60px; }
+.autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #d4b800; border-top: none; border-radius: 0 0 7px 7px; z-index: 200; max-height: 160px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+.autocomplete-item { padding: 8px 10px; font-size: 12px; color: #1a1200; cursor: pointer; border-bottom: 1px solid #f0e060; }
+.autocomplete-item:last-child { border-bottom: none; }
+.autocomplete-item:hover { background: #fff8cc; }
+.autocomplete-item strong { color: #b45309; }
 .doc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .doc-slot { background: #fffde8; border: 1px solid #d4b800; border-radius: 8px; padding: 10px 12px; }
 .doc-slot-top { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
@@ -102,13 +107,16 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 .toast-icon { width: 8px; height: 8px; border-radius: 50%; background: #f5c800; display: inline-block; margin-right: 8px; }
 .toast-title { font-size: 12px; font-weight: 500; color: #f5c800; margin-bottom: 4px; }
 .toast-body { font-size: 11px; color: #a08a00; line-height: 1.5; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d4b800; border-radius: 2px; }
 </style>
 </head>
 <body>
 
 <div class="header">
   <div class="logo">
-    <img src="logo.png" alt="OWL" onerror="this.style.display='none'">
+    <img src="data:image/png;base64,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" alt="OWL" onerror="this.style.display='none'">
     CRM OWL BOOKING AGENCY
   </div>
   <div class="header-stats">
@@ -120,40 +128,54 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 
 <div class="board-wrap"><div class="board" id="board"></div></div>
 
+<div class="ai-panel" id="ai-panel">
+  <div class="ai-panel-head" id="ai-panel-head"></div>
+  <div class="ai-tabs" id="ai-tabs"></div>
+  <div class="ai-out" id="ai-out"></div>
+</div>
+
 <div class="overlay" id="overlay">
   <div class="modal">
     <div class="modal-head">
       <h2 id="modal-title">Ficha</h2>
       <button class="modal-close" onclick="closeModal()">×</button>
     </div>
+
     <div class="section-label">Información general</div>
     <div class="fg">
-      <div class="f full"><label>Nombre de la transacción</label><input id="f-name" type="text"></div>
-      <div class="f"><label>Fecha</label><input id="f-date" type="date"></div>
-      <div class="f"><label>Importe (€)</label><input id="f-amount" type="number"></div>
+      <div class="f full"><label>Nombre de la transacción</label><input id="f-name" type="text" placeholder="Ej: The Jazz Collective – Razzmatazz"></div>
+      <div class="f"><label>Fecha de prestación</label><input id="f-date" type="date"></div>
+      <div class="f"><label>Importe (€)</label><input id="f-amount" type="number" step="0.01" placeholder="0.00"></div>
     </div>
+
     <div class="section-label">Artista & Espacio</div>
     <div class="fg">
-      <div class="f"><label>Artista</label><input id="f-artist" type="text"></div>
-      <div class="f"><label>Espacio</label><input id="f-venue" type="text"></div>
-      <div class="f"><label>Email Artista</label><input id="f-artist-email" type="email"></div>
-      <div class="f"><label>Email Espacio</label><input id="f-email" type="email"></div>
-      <div class="f"><label>Teléfono</label><input id="f-phone" type="tel"></div>
+      <div class="f"><label>Artista / Grupo</label><input id="f-artist" type="text" placeholder="Nombre del artista" oninput="autocomplete(this,'artist')" onblur="setTimeout(()=>closeAC('artist'),200)" autocomplete="off"><div class="autocomplete-list" id="ac-artist" style="display:none"></div></div>
+      <div class="f"><label>Espacio / Venue</label><input id="f-venue" type="text" placeholder="Nombre del espacio" oninput="autocomplete(this,'venue')" onblur="setTimeout(()=>closeAC('venue'),200)" autocomplete="off"><div class="autocomplete-list" id="ac-venue" style="display:none"></div></div>
+      <div class="f"><label>Email artista</label><input id="f-artist-email" type="email" placeholder="artista@mail.com"></div>
+      <div class="f"><label>Email contacto (venue)</label><input id="f-email" type="email" placeholder="venue@mail.com"></div>
+      <div class="f"><label>Teléfono</label><input id="f-phone" type="tel" placeholder="+34 600 000 000"></div>
     </div>
+
     <div class="section-label">Datos fiscales</div>
     <div class="fg">
-      <div class="f full"><label>Empresa</label><input id="f-company" type="text"></div>
-      <div class="f"><label>NIF</label><input id="f-nif" type="text"></div>
-      <div class="f full"><label>Dirección</label><input id="f-address" type="text"></div>
-      <div class="f"><label>Representante</label><input id="f-legal-rep" type="text"></div>
-      <div class="f"><label>DNI</label><input id="f-legal-dni" type="text"></div>
+      <div class="f full"><label>Nombre de la empresa</label><input id="f-company" type="text" placeholder="Razón social completa"></div>
+      <div class="f"><label>NIF / CIF</label><input id="f-nif" type="text" placeholder="B12345678"></div>
+      <div class="f full"><label>Dirección fiscal</label><input id="f-address" type="text" placeholder="C/ Nombre, Número, Ciudad"></div>
+      <div class="f"><label>Representante legal</label><input id="f-legal-rep" type="text" placeholder="Nombre completo"></div>
+      <div class="f"><label>DNI del representante</label><input id="f-legal-dni" type="text" placeholder="12345678A"></div>
     </div>
+
     <div class="section-label">Notas</div>
-    <div class="fg"><div class="f full"><textarea id="f-notes"></textarea></div></div>
+    <div class="fg">
+      <div class="f full"><textarea id="f-notes" placeholder="Observaciones, rider técnico, condiciones especiales..."></textarea></div>
+    </div>
+
     <div class="section-label">Documentos</div>
     <div class="doc-grid" id="doc-grid"></div>
+
     <div class="modal-foot">
-      <button class="btn danger" onclick="deleteCard()">Eliminar</button>
+      <button class="btn danger" onclick="deleteCard()">Eliminar ficha</button>
       <div class="modal-foot-r">
         <button class="btn" onclick="closeModal()">Cancelar</button>
         <button class="btn primary" onclick="saveCard()">Guardar</button>
@@ -168,169 +190,424 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 </div>
 
 <script>
-const MAKE_WEBHOOK = 'https://hook.eu1.make.com/lnxfq84l38pywu3izj52dc3tasjdtsit';
 const COLS = [
-  { id:'artista', label:'Artista y Espacio', color:'var(--col1)' },
-  { id:'oferta_enviada', label:'Oferta Enviada', color:'var(--col2)' },
-  { id:'oferta_aceptada', label:'Oferta Aceptada', color:'var(--col3)' },
-  { id:'contrato_factura', label:'Contrato y Factura', color:'var(--col4)' },
-  { id:'rider', label:'Rider y EPK', color:'var(--col5)' },
-  { id:'hoja_ruta', label:'Hoja de Ruta', color:'var(--col6)' },
-  { id:'factura_enviada', label:'Factura Enviada', color:'var(--col7)' },
-  { id:'factura_cobrada', label:'Factura Cobrada', color:'var(--col8)' }
+  { id:'artista',          label:'Artista y Espacio',           color:'var(--col1)' },
+  { id:'oferta_enviada',   label:'Oferta Enviada',              color:'var(--col2)' },
+  { id:'oferta_aceptada',  label:'Oferta Aceptada',             color:'var(--col3)' },
+  { id:'contrato_factura', label:'Contrato y Factura Proforma', color:'var(--col4)' },
+  { id:'rider',            label:'Rider, Hospitality y EPK',    color:'var(--col5)' },
+  { id:'hoja_ruta',        label:'Hoja de Ruta',                color:'var(--col6)' },
+  { id:'factura_enviada',  label:'Factura Enviada',             color:'var(--col7)' },
+  { id:'factura_cobrada',  label:'Factura Cobrada',             color:'var(--col8)' },
+  { id:'factura_pagada',   label:'Factura Pagada',              color:'var(--col9)' }
 ];
+
 const DOC_SLOTS = [
-  { key:'contrato', label:'Contrato', color:'#4a9eff' },
-  { key:'factura_proforma', label:'Proforma', color:'#f59e0b' },
-  { key:'rider', label:'Rider', color:'#ec4899' },
-  { key:'hospitality', label:'Hospitality', color:'#ec4899' },
-  { key:'epk', label:'EPK', color:'#ec4899' },
-  { key:'hoja_ruta', label:'Hoja de Ruta', color:'#8b5cf6' },
-  { key:'factura', label:'Factura', color:'#f97316' }
+  { key:'contrato',        label:'Contrato',        color:'#4a9eff' },
+  { key:'factura_proforma',label:'Factura proforma', color:'#f59e0b' },
+  { key:'rider',           label:'Rider',            color:'#ec4899' },
+  { key:'hospitality',     label:'Hospitality',      color:'#ec4899' },
+  { key:'epk',             label:'EPK',              color:'#ec4899' },
+  { key:'hoja_ruta',       label:'Hoja de Ruta',     color:'#8b5cf6' },
+  { key:'factura',         label:'Factura',          color:'#f97316' }
 ];
 
-let cards = JSON.parse(localStorage.getItem('crm_cards') || '{}');
+function emptyDocs() {
+  const d = {};
+  DOC_SLOTS.forEach(s => d[s.key] = null);
+  return d;
+}
+
+function fmt(n) {
+  return '€ ' + (n||0).toLocaleString('es-ES', { minimumFractionDigits:0, maximumFractionDigits:0 });
+}
+
+function loadCards() {
+  try {
+    const saved = localStorage.getItem('crm_cards');
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return {
+    'c1': { name:'The Jazz Collective – Razzmatazz', date:'2026-04-12', amount:3500, artist:'The Jazz Collective', venue:'Razzmatazz', email:'booking@razzmatazz.es', artistEmail:'manager@jazzc.com', phone:'+34 932 001 122', company:'Razzmatazz SL', nif:'B12345678', address:'C/ Pamplona 88, Barcelona', legalRep:'', legalDni:'', notes:'Catering incluido', docs:{...emptyDocs(), rider:'rider.pdf', epk:'epk.pdf'}, col:'artista' },
+    'c2': { name:'Marta Soto – Sala Apolo', date:'2026-05-03', amount:1800, artist:'Marta Soto', venue:'Sala Apolo', email:'produccion@apolo.es', artistEmail:'marta@soto.com', phone:'+34 934 412 040', company:'Sala Apolo SL', nif:'A98765432', address:'C/ Nou de la Rambla 113', legalRep:'', legalDni:'', notes:'', docs:emptyDocs(), col:'oferta_enviada' },
+    'c3': { name:'DJ Forma – Nitsa Club', date:'2026-04-20', amount:2200, artist:'DJ Forma', venue:'Nitsa Club', email:'info@nitsa.com', artistEmail:'djforma@mail.com', phone:'+34 933 178 600', company:'Nitsa Club SL', nif:'C11223344', address:'C/ Nou de la Rambla 113', legalRep:'', legalDni:'', notes:'Equipo propio', docs:{...emptyDocs(), rider:'rider_djforma.pdf', hospitality:'hospitality.pdf'}, col:'contrato_factura' },
+    'c4': { name:'Los Tsunamis – BARTS', date:'2026-06-01', amount:4800, artist:'Los Tsunamis', venue:'BARTS', email:'barts@barts.cat', artistEmail:'tsunamis@mgmt.com', phone:'+34 933 240 740', company:'BARTS SL', nif:'B55443322', address:'Av. Paral·lel 62, Barcelona', legalRep:'', legalDni:'', notes:'', docs:{...emptyDocs(), hoja_ruta:'hoja_ruta.pdf'}, col:'factura_cobrada' }
+  };
+}
+
+function saveCards() {
+  try { localStorage.setItem('crm_cards', JSON.stringify(cards)); } catch(e) {}
+}
+
+let cards = loadCards();
+let nextId = Object.keys(cards).length + 1;
 let editId = null;
+let dragId = null;
 
-function saveCards() { localStorage.setItem('crm_cards', JSON.stringify(cards)); renderAll(); }
-
-function renderAll() {
+function buildBoard() {
   const board = document.getElementById('board');
   board.innerHTML = '';
-  let totalP = 0, totalF = 0;
   COLS.forEach(col => {
-    let colSum = 0, colCnt = 0;
     const div = document.createElement('div');
     div.className = 'col';
-    div.innerHTML = `<div class="col-head"><div class="col-indicator" style="background:${col.color}"></div><div class="col-name">${col.label}</div><div class="col-sum" id="sum-${col.id}">€ 0</div></div><div class="col-body" id="body-${col.id}" ondragover="event.preventDefault()" ondrop="drop(event,'${col.id}')"></div><div class="add-btn" onclick="newCard('${col.id}')">+ Añadir</div>`;
+    div.innerHTML = `
+      <div class="col-head">
+        <div class="col-indicator" style="background:${col.color}"></div>
+        <div class="col-name">${col.label}</div>
+        <div class="col-sum" id="sum-${col.id}">€ 0</div>
+        <div class="col-cnt" id="cnt-${col.id}">0 fichas</div>
+      </div>
+      <div class="col-body" id="body-${col.id}"
+        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragleave="this.classList.remove('over')"
+        ondrop="onDrop(event,'${col.id}')">
+      </div>
+      <div class="add-btn" onclick="newCard('${col.id}')">+ Añadir ficha</div>`;
     board.appendChild(div);
+  });
+  renderAll();
+}
+
+function renderAll() {
+  COLS.forEach(col => {
+    const body = document.getElementById('body-' + col.id);
+    body.innerHTML = '';
+    let sum = 0, count = 0;
     Object.entries(cards).forEach(([id, c]) => {
       if (c.col !== col.id) return;
-      colSum += c.amount || 0; colCnt++;
+      sum += c.amount || 0; count++;
       const card = document.createElement('div');
-      card.className = 'card'; card.draggable = true;
-      card.ondragstart = () => editId = id;
-      card.innerHTML = `<div class="card-name">${c.name}</div><div class="card-amount">€ ${c.amount}</div><button class="btn-card" onclick="openModal('${id}')">Ver</button>`;
-      document.getElementById('body-' + col.id).appendChild(card);
+      card.className = 'card';
+      card.draggable = true;
+      card.dataset.id = id;
+      card.ondragstart = () => { dragId = id; card.classList.add('dragging'); };
+      card.ondragend = () => { card.classList.remove('dragging'); document.querySelectorAll('.col-body').forEach(b => b.classList.remove('over')); };
+      const dateStr = c.date ? new Date(c.date + 'T12:00:00').toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric' }) : '—';
+      card.innerHTML = `
+        <div class="card-name">${c.name || 'Sin nombre'}</div>
+        <div class="card-date">${dateStr}</div>
+        <div class="card-amount">${fmt(c.amount)}</div>
+        <div class="card-footer"><button class="btn-card" onclick="openModal('${id}')">Ver ficha</button></div>`;
+      body.appendChild(card);
     });
-    document.getElementById('sum-' + col.id).textContent = '€ ' + colSum;
-    totalP += colSum; totalF += colCnt;
+    document.getElementById('sum-' + col.id).textContent = fmt(sum);
+    document.getElementById('cnt-' + col.id).textContent = count + ' ficha' + (count !== 1 ? 's' : '');
   });
-  document.getElementById('total-fichas').textContent = totalF;
-  document.getElementById('total-pipeline').textContent = '€ ' + totalP;
+  updateHeader();
 }
 
-function drop(e, toCol) {
-  if (!editId) return;
-  cards[editId].col = toCol;
+function updateHeader() {
+  let total = 0, count = 0;
+  Object.values(cards).forEach(c => { total += c.amount || 0; count++; });
+  document.getElementById('total-fichas').textContent = count;
+  document.getElementById('total-pipeline').textContent = fmt(total);
+}
+
+function onDrop(e, toCol) {
+  e.preventDefault();
+  document.getElementById('body-' + toCol).classList.remove('over');
+  if (!dragId) return;
+  const c = cards[dragId];
+  if (c.col === toCol) { dragId = null; return; }
+  c.col = toCol;
   saveCards();
-  triggerAutomation(editId, toCol);
-  editId = null;
+  renderAll();
+  triggerAutomation(dragId, toCol);
+  dragId = null;
 }
 
-// CORRECCIÓN PARA EL ERROR 404: Ruta directa a la raíz del Storage
-function getUrl(name) {
-  if (!name) return null;
-  // Usamos el nombre del archivo codificado directamente en la raíz de Firebase
-  return `https://firebasestorage.googleapis.com/v0/b/crm-owl.appspot.com/o/${encodeURIComponent(name)}?alt=media`;
+const MAKE_WEBHOOK = 'https://hook.eu1.make.com/aiva0ref0526k2vnyxto9gqneoedfalv';
+
+async function sendToMake(payload) {
+  try {
+    await fetch(MAKE_WEBHOOK, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+  } catch(e) { console.warn('Make.com webhook error:', e); }
 }
 
-async function triggerAutomation(id, col) {
+function triggerAutomation(id, col) {
   const c = cards[id];
-  const payload = {
-    accion: col,
-    nombre_transaccion: c.name,
-    email_contacto: c.email,
-    email_artista: c.artistEmail,
-    artista: c.artist,
-    venue: c.venue,
-    fecha: c.date,
-    importe: c.amount,
-    nif: c.nif,
-    empresa: c.company,
-    archivos_adjuntos: {
-      contrato: getUrl(c.docs.contrato),
-      factura_proforma: getUrl(c.docs.factura_proforma),
-      rider: getUrl(c.docs.rider),
-      hospitality: getUrl(c.docs.hospitality),
-      epk: getUrl(c.docs.epk),
-      hoja_ruta: getUrl(c.docs.hoja_ruta),
-      factura: getUrl(c.docs.factura)
-    }
+  if (col === 'contrato_factura') generateAndSend(id, ['contrato','factura_proforma']);
+  else if (col === 'rider') {
+    const dd = c.docsData || {};
+    sendToMake({
+      accion:'rider_hospitality_epk',
+      nombre_transaccion:c.name, email_contacto:c.email, email_artista:c.artistEmail||'',
+      artista:c.artist||'', venue:c.venue||'', fecha:c.date||'',
+      asunto:'Rider, Hospitality y EPK', cuerpo:'Adjuntamos Rider, Hospitality y EPK.',
+      archivo_rider:     dd.rider       ? { name: dd.rider.name,       data: dd.rider.data,       mime: dd.rider.mime }       : null,
+      archivo_hospitality: dd.hospitality ? { name: dd.hospitality.name, data: dd.hospitality.data, mime: dd.hospitality.mime } : null,
+      archivo_epk:       dd.epk         ? { name: dd.epk.name,         data: dd.epk.data,         mime: dd.epk.mime }         : null
+    });
+    showToast('Enviando a Make.com', 'Rider, Hospitality y EPK → ' + c.email);
+  }
+  else if (col === 'hoja_ruta') {
+    const dd = c.docsData || {};
+    sendToMake({
+      accion:'hoja_ruta',
+      nombre_transaccion:c.name, email_contacto:c.email, email_artista:c.artistEmail||'',
+      artista:c.artist||'', venue:c.venue||'', fecha:c.date||'',
+      asunto:'Hoja de Ruta', cuerpo:'Adjuntamos Hoja de Ruta.',
+      archivo_hoja_ruta: dd.hoja_ruta ? { name: dd.hoja_ruta.name, data: dd.hoja_ruta.data, mime: dd.hoja_ruta.mime } : null
+    });
+    showToast('Enviando a Make.com', 'Hoja de Ruta → ' + (c.artistEmail || c.email));
+  }
+  else if (col === 'factura_enviada') generateAndSend(id, ['factura']);
+}
+
+async function generateAndSend(id, docs) {
+  const c = cards[id];
+  const panel = document.getElementById('ai-panel');
+  panel.className = 'ai-panel show';
+  panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  document.getElementById('ai-panel-head').textContent = 'Enviando a Make.com · ' + c.name;
+  document.getElementById('ai-out').textContent = 'Datos enviados a Make.com. Make generará los documentos con IA y los enviará por Gmail automáticamente.';
+  document.getElementById('ai-tabs').innerHTML = '';
+
+  const numFactura  = 'FAC-2026-' + Math.floor(Math.random()*900+100);
+  const numProforma = 'FP-2026-'  + Math.floor(Math.random()*900+100);
+
+  const prompts = {
+    contrato: `Redacta un contrato de servicios artísticos en español para:\n- Transacción: ${c.name}\n- Artista: ${c.artist||''} (${c.artistEmail||''})\n- Espacio/Venue: ${c.venue||''} (${c.email||''})\n- Empresa del cliente: ${c.company||c.venue||''}\n- Representante legal: ${c.legalRep||'—'} — DNI: ${c.legalDni||'—'}\n- Fecha del evento: ${c.date||''}\n- Importe: ${fmt(c.amount)}\n- NIF: ${c.nif||''} — Dirección fiscal: ${c.address||''}\nIncluye: partes contratantes (con nombre y DNI del representante legal), objeto del contrato, caché (base imponible + IVA 21%), condiciones técnicas, forma y plazo de pago, cláusula de resolución, y espacio para firmas con nombre y DNI del representante. Máximo 300 palabras.`,
+    factura_proforma: `Genera una factura proforma de servicios artísticos en español:\n- Concepto: ${c.name}\n- Cliente: ${c.company||c.venue||''} — NIF: ${c.nif||''}\n- Dirección fiscal: ${c.address||''}\n- Email: ${c.email||''}\n- Fecha evento: ${c.date||''}\n- Nº Factura Proforma: ${numProforma}\n- Base imponible: ${fmt(c.amount)}\n- IVA: 21%\nIncluye descripción del servicio artístico, datos fiscales del cliente, desglose (base, IVA, total) y condiciones de pago. Máximo 180 palabras.`,
+    factura: `Genera una factura definitiva de servicios artísticos en español:\n- Concepto: ${c.name}\n- Cliente: ${c.company||c.venue||''} — NIF: ${c.nif||''}\n- Dirección fiscal: ${c.address||''}\n- Email: ${c.email||''}\n- Fecha de emisión: ${new Date().toLocaleDateString('es-ES')}\n- Nº Factura: ${numFactura}\n- Base imponible: ${fmt(c.amount)}\n- IVA: 21%\nIncluye descripción, datos fiscales del cliente, desglose IVA, total y cierra con "Gracias por confiar en nosotros". Máximo 180 palabras.`
   };
-  fetch(MAKE_WEBHOOK, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
-  showToast('Enviado', 'Actualizando datos en Make...');
+
+  const emailConfig = {
+    contrato:         { accion:'contrato_factura_proforma', asunto:c.name,    cuerpo:'Adjuntamos contrato para su firma y factura proforma.' },
+    factura_proforma: { accion:'contrato_factura_proforma', asunto:c.name,    cuerpo:'Adjuntamos contrato para su firma y factura proforma.' },
+    factura:          { accion:'factura_enviada',           asunto:'Factura', cuerpo:'Adjuntamos factura, gracias por todo.' }
+  };
+
+  const cfg = emailConfig[docs[0]];
+  await sendToMake({
+    accion: cfg.accion,
+    nombre_transaccion: c.name,
+    email_contacto: c.email || '',
+    email_artista: c.artistEmail || '',
+    artista: c.artist || '',
+    venue: c.venue || '',
+    empresa: c.company || '',
+    representante_legal: c.legalRep || '',
+    dni_representante: c.legalDni || '',
+    fecha: c.date || '',
+    importe: fmt(c.amount),
+    importe_base: c.amount,
+    nif: c.nif || '',
+    direccion_fiscal: c.address || '',
+    telefono: c.phone || '',
+    notas: c.notes || '',
+    asunto_email: cfg.asunto,
+    cuerpo_email: cfg.cuerpo,
+    num_factura: numFactura,
+    num_proforma: numProforma,
+    prompts: Object.fromEntries(docs.map(d => [d, prompts[d]])),
+    archivos_adjuntos: c.docs || {},
+    archivos_data: c.docsData || {}
+  });
+
+  const labels = { contrato:'Contrato', factura_proforma:'Factura proforma', factura:'Factura' };
+  const tabsEl = document.getElementById('ai-tabs');
+  docs.forEach((doc, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'atab' + (i === 0 ? ' on' : '');
+    btn.textContent = labels[doc];
+    btn.onclick = () => {
+      document.querySelectorAll('.atab').forEach(t => t.classList.remove('on'));
+      btn.classList.add('on');
+      document.getElementById('ai-out').textContent = 'Prompt enviado a Make.com:\n\n' + prompts[doc];
+    };
+    tabsEl.appendChild(btn);
+  });
+
+  document.getElementById('ai-panel-head').textContent = 'Enviado a Make.com · ' + (c.email || '');
+  document.getElementById('ai-out').textContent = 'Prompt enviado a Make.com:\n\n' + prompts[docs[0]];
+  showToast('Enviado a Make.com', 'Asunto: "' + cfg.asunto + '" → ' + (c.email || ''));
 }
 
 function openModal(id) {
-  editId = id; const c = cards[id];
-  document.getElementById('f-name').value = c.name;
-  document.getElementById('f-date').value = c.date;
-  document.getElementById('f-amount').value = c.amount;
-  document.getElementById('f-artist').value = c.artist;
-  document.getElementById('f-venue').value = c.venue;
-  document.getElementById('f-email').value = c.email;
-  document.getElementById('f-artist-email').value = c.artistEmail;
-  document.getElementById('f-phone').value = c.phone;
-  document.getElementById('f-company').value = c.company;
-  document.getElementById('f-nif').value = c.nif;
-  document.getElementById('f-address').value = c.address;
-  document.getElementById('f-legal-rep').value = c.legalRep;
-  document.getElementById('f-legal-dni').value = c.legalDni;
-  document.getElementById('f-notes').value = c.notes;
-  renderDocs(c.docs);
-  document.getElementById('overlay').classList.add('open');
+  editId = id;
+  const c = cards[id];
+  document.getElementById('modal-title').textContent = c.name || 'Ficha';
+  document.getElementById('f-name').value        = c.name       || '';
+  document.getElementById('f-date').value        = c.date       || '';
+  document.getElementById('f-amount').value      = c.amount     || '';
+  document.getElementById('f-artist').value      = c.artist     || '';
+  document.getElementById('f-venue').value       = c.venue      || '';
+  document.getElementById('f-email').value       = c.email      || '';
+  document.getElementById('f-artist-email').value= c.artistEmail|| '';
+  document.getElementById('f-phone').value       = c.phone      || '';
+  document.getElementById('f-company').value     = c.company    || '';
+  document.getElementById('f-nif').value         = c.nif        || '';
+  document.getElementById('f-address').value     = c.address    || '';
+  document.getElementById('f-legal-rep').value   = c.legalRep   || '';
+  document.getElementById('f-legal-dni').value   = c.legalDni   || '';
+  document.getElementById('f-notes').value       = c.notes      || '';
+  renderDocGrid(c.docs || emptyDocs());
+  document.getElementById('overlay').className = 'overlay open';
 }
 
 function newCard(col) {
-  const id = 'c' + Date.now();
-  cards[id] = { name:'Nueva ficha', col: col || 'artista', amount:0, docs:{} };
-  openModal(id);
+  editId = 'new:' + (col || COLS[0].id);
+  document.getElementById('modal-title').textContent = 'Nueva ficha';
+  ['name','artist','venue','email','artist-email','phone','company','nif','address','legal-rep','legal-dni','notes'].forEach(f => document.getElementById('f-' + f).value = '');
+  document.getElementById('f-amount').value = '';
+  document.getElementById('f-date').value = '';
+  renderDocGrid(emptyDocs());
+  document.getElementById('overlay').className = 'overlay open';
 }
+
+function closeModal() { document.getElementById('overlay').className = 'overlay'; }
 
 function saveCard() {
-  const c = cards[editId];
-  c.name = document.getElementById('f-name').value;
-  c.date = document.getElementById('f-date').value;
-  c.amount = parseFloat(document.getElementById('f-amount').value) || 0;
-  c.artist = document.getElementById('f-artist').value;
-  c.venue = document.getElementById('f-venue').value;
-  c.email = document.getElementById('f-email').value;
-  c.artistEmail = document.getElementById('f-artist-email').value;
-  c.phone = document.getElementById('f-phone').value;
-  c.company = document.getElementById('f-company').value;
-  c.nif = document.getElementById('f-nif').value;
-  c.address = document.getElementById('f-address').value;
-  c.legalRep = document.getElementById('f-legal-rep').value;
-  c.legalDni = document.getElementById('f-legal-dni').value;
-  c.notes = document.getElementById('f-notes').value;
-  saveCards(); closeModal();
+  const isNew = editId && editId.startsWith('new:');
+  const col   = isNew ? editId.split(':')[1] : cards[editId].col;
+  const id    = isNew ? 'c' + (nextId++) : editId;
+  const prevDocs = (!isNew && cards[id]) ? cards[id].docs : emptyDocs();
+  cards[id] = {
+    name:        document.getElementById('f-name').value,
+    date:        document.getElementById('f-date').value,
+    amount:      parseFloat(document.getElementById('f-amount').value) || 0,
+    artist:      document.getElementById('f-artist').value,
+    venue:       document.getElementById('f-venue').value,
+    email:       document.getElementById('f-email').value,
+    artistEmail: document.getElementById('f-artist-email').value,
+    phone:       document.getElementById('f-phone').value,
+    company:     document.getElementById('f-company').value,
+    nif:         document.getElementById('f-nif').value,
+    address:     document.getElementById('f-address').value,
+    legalRep:    document.getElementById('f-legal-rep').value,
+    legalDni:    document.getElementById('f-legal-dni').value,
+    notes:       document.getElementById('f-notes').value,
+    docs: prevDocs,
+    col
+  };
+  saveCards();
+  closeModal();
+  renderAll();
 }
 
-function renderDocs(docs) {
+function deleteCard() {
+  if (editId && !editId.startsWith('new:')) { delete cards[editId]; saveCards(); }
+  closeModal();
+  renderAll();
+}
+
+function renderDocGrid(docs) {
   const grid = document.getElementById('doc-grid');
   grid.innerHTML = '';
-  DOC_SLOTS.forEach(s => {
-    const has = docs[s.key];
-    grid.innerHTML += `<div class="doc-slot"><div class="doc-slot-name">${s.label}</div><div class="doc-filename ${has?'has':''}">${has || 'Vacío'}</div><button class="doc-btn" onclick="document.getElementById('up-${s.key}').click()">Subir</button><input type="file" id="up-${s.key}" style="display:none" onchange="upDoc('${s.key}',this)"></div>`;
+  DOC_SLOTS.forEach(slot => {
+    const hasFile = docs && docs[slot.key];
+    const div = document.createElement('div');
+    div.className = 'doc-slot';
+    div.innerHTML = `
+      <div class="doc-slot-top">
+        <div class="doc-dot" style="background:${slot.color}"></div>
+        <span class="doc-slot-name">${slot.label}</span>
+      </div>
+      <div class="doc-slot-bottom">
+        <span class="doc-filename ${hasFile ? 'has' : ''}" id="dfn-${slot.key}">${hasFile ? docs[slot.key] : 'Sin archivo'}</span>
+        <div class="doc-actions">
+          ${hasFile
+            ? `<button class="doc-btn remove" onclick="removeDoc('${slot.key}')">Quitar</button>`
+            : `<button class="doc-btn upload" onclick="document.getElementById('fi-${slot.key}').click()">Subir</button>`}
+        </div>
+      </div>
+      <input type="file" id="fi-${slot.key}" style="display:none" accept=".pdf,.doc,.docx,.jpg,.png" onchange="attachDoc('${slot.key}',this)">`;
+    grid.appendChild(div);
   });
 }
 
-function upDoc(key, input) {
-  if (input.files[0]) { cards[editId].docs[key] = input.files[0].name; renderDocs(cards[editId].docs); }
+function attachDoc(key, input) {
+  if (!input.files[0]) return;
+  const file = input.files[0];
+  const fname = file.name;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64 = e.target.result.split(',')[1];
+    const mimeType = file.type || 'application/octet-stream';
+    if (editId && !editId.startsWith('new:') && cards[editId]) {
+      cards[editId].docs[key] = fname;
+      if (!cards[editId].docsData) cards[editId].docsData = {};
+      cards[editId].docsData[key] = { name: fname, data: base64, mime: mimeType };
+      saveCards();
+    }
+    const span = document.getElementById('dfn-' + key);
+    if (span) { span.textContent = fname; span.className = 'doc-filename has'; }
+    const btn = input.previousElementSibling?.querySelector('button');
+    if (btn) { btn.className = 'doc-btn remove'; btn.textContent = 'Quitar'; btn.onclick = () => removeDoc(key); }
+  };
+  reader.readAsDataURL(file);
 }
 
-function deleteCard() { delete cards[editId]; saveCards(); closeModal(); }
-function closeModal() { document.getElementById('overlay').classList.remove('open'); }
-function showToast(t, b) { 
-    const el = document.getElementById('toast'); 
-    document.getElementById('toast-title').innerText = t;
-    document.getElementById('toast-body').innerText = b;
-    el.classList.add('show'); 
-    setTimeout(() => el.classList.remove('show'), 3000); 
+function removeDoc(key) {
+  if (editId && !editId.startsWith('new:') && cards[editId]) { cards[editId].docs[key] = null; saveCards(); }
+  const span = document.getElementById('dfn-' + key);
+  if (span) { span.textContent = 'Sin archivo'; span.className = 'doc-filename'; }
+  const btn = span?.nextElementSibling?.querySelector('button');
+  if (btn) { btn.className = 'doc-btn upload'; btn.textContent = 'Subir'; btn.onclick = () => document.getElementById('fi-' + key).click(); }
 }
 
-renderAll();
+function getContactBook() {
+  const book = {};
+  Object.values(cards).forEach(c => {
+    if (c.artist) {
+      const k = c.artist.toLowerCase();
+      if (!book[k]) book[k] = { artist:c.artist, artistEmail:c.artistEmail||'', phone:c.phone||'', label:c.artist };
+    }
+    if (c.venue) {
+      const k = '__venue__' + c.venue.toLowerCase();
+      if (!book[k]) book[k] = { venue:c.venue, email:c.email||'', company:c.company||'', nif:c.nif||'', address:c.address||'', legalRep:c.legalRep||'', legalDni:c.legalDni||'', label:c.venue };
+    }
+  });
+  return book;
+}
+
+function autocomplete(input, type) {
+  const val = input.value.trim().toLowerCase();
+  const list = document.getElementById('ac-' + type);
+  if (!val || val.length < 2) { list.style.display = 'none'; return; }
+  const book = getContactBook();
+  const prefix = type === 'venue' ? '__venue__' : '';
+  const matches = Object.entries(book).filter(([k]) => k.startsWith(prefix) && k.replace(prefix,'').includes(val)).map(([,v]) => v).slice(0, 6);
+  if (!matches.length) { list.style.display = 'none'; return; }
+  list.innerHTML = matches.map((m, i) => `<div class="autocomplete-item" onmousedown="applyContact(${i},'${type}')">${m.label.replace(new RegExp('('+val+')', 'gi'), '<strong>$1</strong>')}</div>`).join('');
+  list._matches = matches;
+  list.style.display = 'block';
+}
+
+function applyContact(i, type) {
+  const list = document.getElementById('ac-' + type);
+  const m = list._matches[i];
+  if (!m) return;
+  if (type === 'artist') {
+    document.getElementById('f-artist').value = m.artist || '';
+    if (m.artistEmail) document.getElementById('f-artist-email').value = m.artistEmail;
+    if (m.phone)       document.getElementById('f-phone').value = m.phone;
+  } else {
+    document.getElementById('f-venue').value   = m.venue   || '';
+    if (m.email)    document.getElementById('f-email').value    = m.email;
+    if (m.company)  document.getElementById('f-company').value  = m.company;
+    if (m.nif)      document.getElementById('f-nif').value      = m.nif;
+    if (m.address)  document.getElementById('f-address').value  = m.address;
+    if (m.legalRep) document.getElementById('f-legal-rep').value= m.legalRep;
+    if (m.legalDni) document.getElementById('f-legal-dni').value= m.legalDni;
+  }
+  list.style.display = 'none';
+}
+
+function closeAC(type) { const l = document.getElementById('ac-' + type); if (l) l.style.display = 'none'; }
+
+let toastTimer;
+function showToast(title, body) {
+  document.getElementById('toast-title').textContent = title;
+  document.getElementById('toast-body').textContent = body;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 5000);
+}
+
+buildBoard();
 </script>
 </body>
 </html>
