@@ -120,12 +120,6 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 
 <div class="board-wrap"><div class="board" id="board"></div></div>
 
-<div class="ai-panel" id="ai-panel">
-  <div class="ai-panel-head" id="ai-panel-head"></div>
-  <div class="ai-tabs" id="ai-tabs"></div>
-  <div class="ai-out" id="ai-out"></div>
-</div>
-
 <div class="overlay" id="overlay">
   <div class="modal">
     <div class="modal-head">
@@ -234,10 +228,10 @@ function drop(e, toCol) {
   editId = null;
 }
 
-// ESTA ES LA FUNCIÓN QUE CORRIGE EL ERROR 404
+// CORRECCIÓN PARA EL ERROR 404: Ruta directa a la raíz del Storage
 function getUrl(name) {
   if (!name) return null;
-  // Usamos el formato universal de Firebase para evitar carpetas inexistentes
+  // Usamos el nombre del archivo codificado directamente en la raíz de Firebase
   return `https://firebasestorage.googleapis.com/v0/b/crm-owl.appspot.com/o/${encodeURIComponent(name)}?alt=media`;
 }
 
@@ -265,7 +259,7 @@ async function triggerAutomation(id, col) {
     }
   };
   fetch(MAKE_WEBHOOK, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
-  showToast('Enviado', 'Procesando en Make...');
+  showToast('Enviado', 'Actualizando datos en Make...');
 }
 
 function openModal(id) {
@@ -318,7 +312,7 @@ function renderDocs(docs) {
   grid.innerHTML = '';
   DOC_SLOTS.forEach(s => {
     const has = docs[s.key];
-    grid.innerHTML += `<div class="doc-slot"><div class="doc-slot-name">${s.label}</div><div class="doc-filename">${has || 'Vacío'}</div><button onclick="document.getElementById('up-${s.key}').click()">Subir</button><input type="file" id="up-${s.key}" style="display:none" onchange="upDoc('${s.key}',this)"></div>`;
+    grid.innerHTML += `<div class="doc-slot"><div class="doc-slot-name">${s.label}</div><div class="doc-filename ${has?'has':''}">${has || 'Vacío'}</div><button class="doc-btn" onclick="document.getElementById('up-${s.key}').click()">Subir</button><input type="file" id="up-${s.key}" style="display:none" onchange="upDoc('${s.key}',this)"></div>`;
   });
 }
 
