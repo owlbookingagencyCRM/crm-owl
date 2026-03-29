@@ -168,7 +168,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 
     <div class="section-label">Facturación</div>
     <div class="fg">
-      <div class="f"><label>Nº Factura</label><input id="f-num-factura" type="text" placeholder="OW2026003" style="font-family:var(--mono);background:#fff8e0;border-color:#c89e00"></div>
+      <div class="f"><label>Nº Factura</label><input id="f-num-factura" type="text" placeholder="Se asigna automáticamente" style="font-family:var(--mono);background:#fff8e0;border-color:#c89e00"></div>
       <div class="f"><label>Fecha de factura</label><input id="f-fecha-factura" type="text" placeholder="Se asigna al enviar" readonly style="background:#f5f5f5;color:#999;font-family:var(--mono)"></div>
     </div>
     <div style="font-size:10px;color:#7a6000;margin-top:4px;margin-bottom:8px;">El Nº Factura se asigna automáticamente al pasar a "Factura Enviada" y no cambia aunque se vuelva a arrastrar. La fecha sí se actualiza.</div>
@@ -355,6 +355,15 @@ async function uploadToSupabase(file, cardId, slotKey) {
   return `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_BUCKET}/${path}`;
 }
 
+function getNextNumFactura() {
+  const year = new Date().getFullYear();
+  const key = 'owl_factura_contador_' + year;
+  let n = parseInt(localStorage.getItem(key) || '2') + 1;
+  localStorage.setItem(key, n);
+  const pad = n < 10 ? '00' : n < 100 ? '0' : '';
+  return 'OW' + year + pad + n;
+}
+
 async function sendToMake(payload) {
   try {
     await fetch(MAKE_WEBHOOK, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
@@ -403,9 +412,12 @@ async function generateAndSend(id, docs) {
   const numProforma = 'FP-' + new Date().getFullYear() + '-' + Math.floor(Math.random()*900+100);
   const fechaHoy = new Date().toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric' });
 
-  // Número de factura: solo se asigna la primera vez, Make lo devuelve via webhook
-  // La fecha de factura siempre se actualiza
+  // Número de factura: se asigna la primera vez y no cambia
   if (docs.includes('factura')) {
+    if (!cards[id].numFactura) {
+      cards[id].numFactura = getNextNumFactura();
+      document.getElementById('f-num-factura') && (document.getElementById('f-num-factura').value = cards[id].numFactura);
+    }
     cards[id].fechaFactura = fechaHoy;
     saveCards();
   }
@@ -443,9 +455,9 @@ async function generateAndSend(id, docs) {
     direccion_fiscal: c.address || '',
     telefono: c.phone || '',
     notas: c.notes || '',
-    num_factura_crm: c.numFactura || '',
+    num_factura_crm: cards[id].numFactura || '',
     fecha_factura: cards[id].fechaFactura || fechaHoy,
-    tiene_num_factura: !!(c.numFactura),
+    tiene_num_factura: !!(cards[id].numFactura),
     asunto_email: cfg.asunto,
     cuerpo_email: cfg.cuerpo,
     num_proforma: numProforma,
@@ -499,8 +511,13 @@ function openModal(id) {
 
 function newCard(col) {
   editId = 'new:' + (col || COLS[0].id);
+  window._pendingDocsUrls = {};
+  window._pendingDocs = {};
   document.getElementById('modal-title').textContent = 'Nueva ficha';
-  ['name','artist','venue','email','artist-email','phone','company','nif','address','legal-rep','legal-dni','num-factura','notes'].forEach(f => document.getElementById('f-' + f).value = '');
+  ['name','artist','venue','email','artist-email','phone','company','nif','address','legal-rep','legal-dni','num-factura','notes'].forEach(f => {
+    const el = document.getElementById('f-' + f);
+    if (el) el.value = '';
+  });
   document.getElementById('f-fecha-factura').value = '';
   document.getElementById('f-amount').value = '';
   document.getElementById('f-date').value = '';
@@ -583,10 +600,11 @@ function attachDoc(key, input) {
   const btn = input.previousElementSibling?.querySelector('button');
   if (span) { span.textContent = 'Subiendo...'; span.className = 'doc-filename'; }
 
-  const cardId = (editId && !editId.startsWith('new:')) ? editId : ('new_' + Date.now());
+  const isNew = editId && editId.startsWith('new:');
+  const cardId = isNew ? ('tmp_' + editId.replace('new:', '')) : editId;
 
   uploadToSupabase(file, cardId, key).then(url => {
-    if (editId && !editId.startsWith('new:') && cards[editId]) {
+    if (!isNew && cards[editId]) {
       cards[editId].docs[key] = fname;
       if (!cards[editId].docsUrls) cards[editId].docsUrls = {};
       cards[editId].docsUrls[key] = url;
@@ -602,7 +620,7 @@ function attachDoc(key, input) {
     showToast('Archivo subido', fname + ' guardado correctamente');
   }).catch(err => {
     if (span) { span.textContent = 'Error al subir'; span.className = 'doc-filename'; }
-    showToast('Error', 'No se pudo subir el archivo: ' + err.message);
+    showToast('Error', 'No se pudo subir: ' + err.message);
     console.error(err);
   });
 }
