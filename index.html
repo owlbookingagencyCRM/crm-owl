@@ -229,17 +229,82 @@ function fmt(n) {
   return '€ ' + (n||0).toLocaleString('es-ES', { minimumFractionDigits:0, maximumFractionDigits:0 });
 }
 
-function loadCards() {
-  try {
-    const saved = localStorage.getItem('crm_cards');
-    if (saved) return JSON.parse(saved);
-  } catch(e) {}
+function getDefaultCards() {
   return {
     'c1': { name:'The Jazz Collective – Razzmatazz', date:'2026-04-12', amount:3500, artist:'The Jazz Collective', venue:'Razzmatazz', email:'booking@razzmatazz.es', artistEmail:'manager@jazzc.com', phone:'+34 932 001 122', company:'Razzmatazz SL', nif:'B12345678', address:'C/ Pamplona 88, Barcelona', legalRep:'', legalDni:'', notes:'Catering incluido', docs:{...emptyDocs(), rider:'rider.pdf', epk:'epk.pdf'}, col:'artista' },
     'c2': { name:'Marta Soto – Sala Apolo', date:'2026-05-03', amount:1800, artist:'Marta Soto', venue:'Sala Apolo', email:'produccion@apolo.es', artistEmail:'marta@soto.com', phone:'+34 934 412 040', company:'Sala Apolo SL', nif:'A98765432', address:'C/ Nou de la Rambla 113', legalRep:'', legalDni:'', notes:'', docs:emptyDocs(), col:'oferta_enviada' },
     'c3': { name:'DJ Forma – Nitsa Club', date:'2026-04-20', amount:2200, artist:'DJ Forma', venue:'Nitsa Club', email:'info@nitsa.com', artistEmail:'djforma@mail.com', phone:'+34 933 178 600', company:'Nitsa Club SL', nif:'C11223344', address:'C/ Nou de la Rambla 113', legalRep:'', legalDni:'', notes:'Equipo propio', docs:{...emptyDocs(), rider:'rider_djforma.pdf', hospitality:'hospitality.pdf'}, col:'contrato_factura' },
     'c4': { name:'Los Tsunamis – BARTS', date:'2026-06-01', amount:4800, artist:'Los Tsunamis', venue:'BARTS', email:'barts@barts.cat', artistEmail:'tsunamis@mgmt.com', phone:'+34 933 240 740', company:'BARTS SL', nif:'B55443322', address:'Av. Paral·lel 62, Barcelona', legalRep:'', legalDni:'', notes:'', docs:{...emptyDocs(), hoja_ruta:'hoja_ruta.pdf'}, col:'factura_cobrada' }
   };
+}
+
+// ── SUPABASE DB ───────────────────────────────────────────
+async function dbLoadCards() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/crm_fichas?select=id,data&order=updated_at.asc`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const rows = await res.json();
+    if (!rows.length) return null;
+    const result = {};
+    rows.forEach(r => { result[r.id] = r.data; });
+    return result;
+  } catch(e) { console.warn('dbLoadCards error:', e); return null; }
+}
+
+async function dbSaveCard(id, cardData) {
+  const { docsData, ...data } = cardData;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/crm_fichas`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({ id, data, updated_at: new Date().toISOString() })
+    });
+  } catch(e) { console.warn('dbSaveCard error:', e); }
+}
+
+async function dbDeleteCard(id) {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/crm_fichas?id=eq.${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+  } catch(e) { console.warn('dbDeleteCard error:', e); }
+}
+
+async function dbGetNextNumFactura() {
+  const year = new Date().getFullYear();
+  const yearKey = 'OW' + year;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/crm_config?key=eq.factura_contador&select=value`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    const rows = await res.json();
+    const current = rows[0]?.value || {};
+    const n = (current[yearKey] || 2) + 1;
+    current[yearKey] = n;
+    await fetch(`${SUPABASE_URL}/rest/v1/crm_config`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({ key: 'factura_contador', value: current })
+    });
+    const pad = n < 10 ? '00' : n < 100 ? '0' : '';
+    return yearKey + pad + n;
+  } catch(e) {
+    console.warn('dbGetNextNumFactura error:', e);
+    return getNextNumFactura();
+  }
 }
 
 function saveCards() {
@@ -250,7 +315,16 @@ function saveCards() {
       cardsToSave[id] = rest;
     });
     localStorage.setItem('crm_cards', JSON.stringify(cardsToSave));
-  } catch(e) { console.warn('saveCards error:', e); }
+  } catch(e) {}
+  Object.entries(cards).forEach(([id, c]) => dbSaveCard(id, c));
+}
+
+function loadCards() {
+  try {
+    const saved = localStorage.getItem('crm_cards');
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return getDefaultCards();
 }
 
 let cards = loadCards();
@@ -415,8 +489,9 @@ async function generateAndSend(id, docs) {
   // Número de factura: se asigna la primera vez y no cambia
   if (docs.includes('factura')) {
     if (!cards[id].numFactura) {
-      cards[id].numFactura = getNextNumFactura();
-      document.getElementById('f-num-factura') && (document.getElementById('f-num-factura').value = cards[id].numFactura);
+      cards[id].numFactura = await dbGetNextNumFactura();
+      const elNum = document.getElementById('f-num-factura');
+      if (elNum) elNum.value = cards[id].numFactura;
     }
     cards[id].fechaFactura = fechaHoy;
     saveCards();
@@ -562,7 +637,12 @@ function saveCard() {
 }
 
 function deleteCard() {
-  if (editId && !editId.startsWith('new:')) { delete cards[editId]; saveCards(); }
+  if (editId && !editId.startsWith('new:')) {
+    const id = editId;
+    delete cards[id];
+    saveCards();
+    dbDeleteCard(id);
+  }
   closeModal();
   renderAll();
 }
@@ -693,7 +773,24 @@ function showToast(title, body) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 5000);
 }
 
-buildBoard();
+// ── INIT — carga desde Supabase ───────────────────────────
+async function init() {
+  buildBoard();
+  showToast('Cargando...', 'Sincronizando datos con la nube');
+  const dbCards = await dbLoadCards();
+  if (dbCards && Object.keys(dbCards).length > 0) {
+    cards = dbCards;
+    localStorage.setItem('crm_cards', JSON.stringify(dbCards));
+    nextId = Math.max(...Object.keys(dbCards).map(k => parseInt(k.replace(/\D/g,'')) || 0)) + 1;
+    renderAll();
+    showToast('Sincronizado', 'Datos cargados correctamente');
+  } else if (Object.keys(cards).length > 0) {
+    Object.entries(cards).forEach(([id, c]) => dbSaveCard(id, c));
+    showToast('Listo', 'Datos guardados en la nube');
+  }
+}
+
+init();
 </script>
 </body>
 </html>
