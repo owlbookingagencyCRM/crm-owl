@@ -236,7 +236,14 @@ function loadCards() {
 }
 
 function saveCards() {
-  try { localStorage.setItem('crm_cards', JSON.stringify(cards)); } catch(e) {}
+  try {
+    const cardsToSave = {};
+    Object.entries(cards).forEach(([id, c]) => {
+      const { docsData, ...rest } = c;
+      cardsToSave[id] = rest;
+    });
+    localStorage.setItem('crm_cards', JSON.stringify(cardsToSave));
+  } catch(e) { console.warn('saveCards error:', e); }
 }
 
 let cards = loadCards();
@@ -318,6 +325,29 @@ function onDrop(e, toCol) {
 
 const MAKE_WEBHOOK = 'https://hook.eu1.make.com/lnxfq84l38pywu3izj52dc3tasjdtsit';
 
+const SUPABASE_URL = 'https://elkobztdcdskmnlvhudf.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsa29ienRkY2Rza21ubHZodWRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MjY0NzIsImV4cCI6MjA5MDMwMjQ3Mn0.C373qTfoAvyzan8qt3k2ukzk4w01dkWiWWMZutoSrVM';
+const SUPABASE_BUCKET = 'documentos';
+
+async function uploadToSupabase(file, cardId, slotKey) {
+  const ext = file.name.split('.').pop();
+  const path = `${cardId}/${slotKey}_${Date.now()}.${ext}`;
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${SUPABASE_BUCKET}/${path}`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': file.type || 'application/octet-stream',
+      'x-upsert': 'true'
+    },
+    body: file
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error('Supabase upload error: ' + err);
+  }
+  return `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_BUCKET}/${path}`;
+}
+
 async function sendToMake(payload) {
   try {
     await fetch(MAKE_WEBHOOK, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
@@ -328,26 +358,26 @@ function triggerAutomation(id, col) {
   const c = cards[id];
   if (col === 'contrato_factura') generateAndSend(id, ['contrato','factura_proforma']);
   else if (col === 'rider') {
-    const dd = c.docsData || {};
+    const urls = c.docsUrls || {};
     sendToMake({
       accion:'rider_hospitality_epk',
       nombre_transaccion:c.name, email_contacto:c.email, email_artista:c.artistEmail||'',
       artista:c.artist||'', venue:c.venue||'', fecha:c.date||'',
       asunto:'Rider, Hospitality y EPK', cuerpo:'Adjuntamos Rider, Hospitality y EPK.',
-      archivo_rider:     dd.rider       ? { name: dd.rider.name,       data: dd.rider.data,       mime: dd.rider.mime }       : null,
-      archivo_hospitality: dd.hospitality ? { name: dd.hospitality.name, data: dd.hospitality.data, mime: dd.hospitality.mime } : null,
-      archivo_epk:       dd.epk         ? { name: dd.epk.name,         data: dd.epk.data,         mime: dd.epk.mime }         : null
+      url_rider:       urls.rider       || null,
+      url_hospitality: urls.hospitality || null,
+      url_epk:         urls.epk         || null
     });
     showToast('Enviando a Make.com', 'Rider, Hospitality y EPK → ' + c.email);
   }
   else if (col === 'hoja_ruta') {
-    const dd = c.docsData || {};
+    const urls = c.docsUrls || {};
     sendToMake({
       accion:'hoja_ruta',
       nombre_transaccion:c.name, email_contacto:c.email, email_artista:c.artistEmail||'',
       artista:c.artist||'', venue:c.venue||'', fecha:c.date||'',
       asunto:'Hoja de Ruta', cuerpo:'Adjuntamos Hoja de Ruta.',
-      archivo_hoja_ruta: dd.hoja_ruta ? { name: dd.hoja_ruta.name, data: dd.hoja_ruta.data, mime: dd.hoja_ruta.mime } : null
+      url_hoja_ruta: urls.hoja_ruta || null
     });
     showToast('Enviando a Make.com', 'Hoja de Ruta → ' + (c.artistEmail || c.email));
   }
@@ -402,7 +432,7 @@ async function generateAndSend(id, docs) {
     num_proforma: numProforma,
     prompts: Object.fromEntries(docs.map(d => [d, prompts[d]])),
     archivos_adjuntos: c.docs || {},
-    archivos_data: c.docsData || {}
+    archivos_urls: c.docsUrls || {}
   });
 
   const labels = { contrato:'Contrato', factura_proforma:'Factura proforma', factura:'Factura' };
@@ -462,7 +492,10 @@ function saveCard() {
   const isNew = editId && editId.startsWith('new:');
   const col   = isNew ? editId.split(':')[1] : cards[editId].col;
   const id    = isNew ? 'c' + (nextId++) : editId;
-  const prevDocs = (!isNew && cards[id]) ? cards[id].docs : emptyDocs();
+  const prevDocs     = (!isNew && cards[id]) ? cards[id].docs     : emptyDocs();
+  const prevDocsUrls = (!isNew && cards[id]) ? (cards[id].docsUrls || {}) : {};
+  if (window._pendingDocsUrls) { Object.assign(prevDocsUrls, window._pendingDocsUrls); window._pendingDocsUrls = {}; }
+  if (window._pendingDocs)     { Object.assign(prevDocs,     window._pendingDocs);     window._pendingDocs = {}; }
   cards[id] = {
     name:        document.getElementById('f-name').value,
     date:        document.getElementById('f-date').value,
@@ -478,7 +511,8 @@ function saveCard() {
     legalRep:    document.getElementById('f-legal-rep').value,
     legalDni:    document.getElementById('f-legal-dni').value,
     notes:       document.getElementById('f-notes').value,
-    docs: prevDocs,
+    docs:     prevDocs,
+    docsUrls: prevDocsUrls,
     col
   };
   saveCards();
@@ -521,22 +555,32 @@ function attachDoc(key, input) {
   if (!input.files[0]) return;
   const file = input.files[0];
   const fname = file.name;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const base64 = e.target.result.split(',')[1];
-    const mimeType = file.type || 'application/octet-stream';
+  const span = document.getElementById('dfn-' + key);
+  const btn = input.previousElementSibling?.querySelector('button');
+  if (span) { span.textContent = 'Subiendo...'; span.className = 'doc-filename'; }
+
+  const cardId = (editId && !editId.startsWith('new:')) ? editId : ('new_' + Date.now());
+
+  uploadToSupabase(file, cardId, key).then(url => {
     if (editId && !editId.startsWith('new:') && cards[editId]) {
       cards[editId].docs[key] = fname;
-      if (!cards[editId].docsData) cards[editId].docsData = {};
-      cards[editId].docsData[key] = { name: fname, data: base64, mime: mimeType };
+      if (!cards[editId].docsUrls) cards[editId].docsUrls = {};
+      cards[editId].docsUrls[key] = url;
       saveCards();
+    } else {
+      if (!window._pendingDocsUrls) window._pendingDocsUrls = {};
+      window._pendingDocsUrls[key] = url;
+      if (!window._pendingDocs) window._pendingDocs = {};
+      window._pendingDocs[key] = fname;
     }
-    const span = document.getElementById('dfn-' + key);
     if (span) { span.textContent = fname; span.className = 'doc-filename has'; }
-    const btn = input.previousElementSibling?.querySelector('button');
     if (btn) { btn.className = 'doc-btn remove'; btn.textContent = 'Quitar'; btn.onclick = () => removeDoc(key); }
-  };
-  reader.readAsDataURL(file);
+    showToast('Archivo subido', fname + ' guardado correctamente');
+  }).catch(err => {
+    if (span) { span.textContent = 'Error al subir'; span.className = 'doc-filename'; }
+    showToast('Error', 'No se pudo subir el archivo: ' + err.message);
+    console.error(err);
+  });
 }
 
 function removeDoc(key) {
