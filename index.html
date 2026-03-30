@@ -124,6 +124,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
   <div class="header-stats">
     <div class="stat"><div class="stat-val" id="total-fichas">0</div><div class="stat-label">Fichas</div></div>
     <div class="stat"><div class="stat-val" id="total-pipeline">€ 0</div><div class="stat-label">Pipeline total</div></div>
+    <div class="stat"><div class="stat-val" id="total-comision">€ 0</div><div class="stat-label">Comisión total</div></div>
   </div>
   <button class="btn-new" onclick="newCard(null)">+ Nueva ficha</button>
 </div>
@@ -147,7 +148,9 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
     <div class="fg">
       <div class="f full"><label>Nombre de la transacción</label><input id="f-name" type="text" placeholder="Ej: The Jazz Collective – Razzmatazz"></div>
       <div class="f"><label>Fecha de prestación</label><input id="f-date" type="date"></div>
-      <div class="f"><label>Importe (€)</label><input id="f-amount" type="number" step="0.01" placeholder="0.00"></div>
+      <div class="f"><label>Importe (€)</label><input id="f-amount" type="number" step="0.01" placeholder="0.00" oninput="calcComision()"></div>
+      <div class="f"><label>% Comisión</label><input id="f-comision" type="number" step="0.1" min="0" max="100" placeholder="15" oninput="calcComision()"></div>
+      <div class="f"><label>Comisión (€)</label><input id="f-comision-euros" type="text" readonly style="background:#fff8e0;font-family:var(--mono);color:#b45309;font-weight:500"></div>
     </div>
 
     <div class="section-label">Artista & Espacio</div>
@@ -387,10 +390,22 @@ function renderAll() {
 }
 
 function updateHeader() {
-  let total = 0, count = 0;
-  Object.values(cards).forEach(c => { total += c.amount || 0; count++; });
+  let total = 0, comision = 0, count = 0;
+  Object.values(cards).forEach(c => {
+    total += c.amount || 0;
+    comision += c.comisionEuros || 0;
+    count++;
+  });
   document.getElementById('total-fichas').textContent = count;
   document.getElementById('total-pipeline').textContent = fmt(total);
+  document.getElementById('total-comision').textContent = fmt(comision);
+}
+
+function calcComision() {
+  const amount = parseFloat(document.getElementById('f-amount').value) || 0;
+  const pct    = parseFloat(document.getElementById('f-comision').value) || 0;
+  const euros  = Math.round(amount * pct / 100 * 100) / 100;
+  document.getElementById('f-comision-euros').value = euros > 0 ? fmt(euros) : '';
 }
 
 function onDrop(e, toCol) {
@@ -569,6 +584,8 @@ function openModal(id) {
   document.getElementById('f-name').value        = c.name       || '';
   document.getElementById('f-date').value        = c.date       || '';
   document.getElementById('f-amount').value      = c.amount     || '';
+  document.getElementById('f-comision').value    = c.comisionPct || '';
+  document.getElementById('f-comision-euros').value = c.comisionEuros > 0 ? fmt(c.comisionEuros) : '';
   document.getElementById('f-artist').value      = c.artist     || '';
   document.getElementById('f-venue').value       = c.venue      || '';
   document.getElementById('f-email').value       = c.email      || '';
@@ -597,6 +614,8 @@ function newCard(col) {
   });
   document.getElementById('f-fecha-factura').value = '';
   document.getElementById('f-amount').value = '';
+  document.getElementById('f-comision').value = '';
+  document.getElementById('f-comision-euros').value = '';
   document.getElementById('f-date').value = '';
   renderDocGrid(emptyDocs());
   document.getElementById('overlay').className = 'overlay open';
@@ -616,6 +635,8 @@ function saveCard() {
     name:        document.getElementById('f-name').value,
     date:        document.getElementById('f-date').value,
     amount:      parseFloat(document.getElementById('f-amount').value) || 0,
+    comisionPct:   parseFloat(document.getElementById('f-comision').value) || 0,
+    comisionEuros: Math.round((parseFloat(document.getElementById('f-amount').value)||0) * (parseFloat(document.getElementById('f-comision').value)||0) / 100 * 100) / 100,
     artist:      document.getElementById('f-artist').value,
     venue:       document.getElementById('f-venue').value,
     email:       document.getElementById('f-email').value,
