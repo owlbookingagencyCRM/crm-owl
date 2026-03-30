@@ -32,15 +32,17 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 .btn-new { font-family: var(--font); font-size: 12px; font-weight: 500; background: #f5c800; color: #1a1200; border: none; border-radius: 6px; padding: 8px 16px; cursor: pointer; transition: background 0.15s; }
 .btn-new:hover { background: #e6b800; }
 .board-wrap { overflow-x: auto; padding: 20px 28px 40px; }
-.board { display: flex; gap: 14px; align-items: flex-start; min-width: max-content; }
-.col { width: 200px; flex-shrink: 0; }
 .col-head { padding: 10px 12px; margin-bottom: 8px; }
 .col-indicator { width: 20px; height: 3px; border-radius: 2px; margin-bottom: 8px; }
 .col-name { font-size: 10px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; line-height: 1.4; }
 .col-sum { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--text); }
 .col-cnt { font-size: 10px; color: var(--text3); margin-top: 2px; }
-.col-body { background: #e8b800; border: 1px solid var(--border); border-radius: 10px; padding: 8px; min-height: 200px; transition: background 0.15s, border-color 0.15s; }
+.col-body { background: #e8b800; border: 1px solid var(--border); border-radius: 10px; padding: 8px; min-height: 200px; transition: background 0.15s, border-color 0.15s; flex: 1; }
 .col-body.over { background: #d4a400; border-color: #1a1200; }
+.col { width: 200px; flex-shrink: 0; display: flex; flex-direction: column; }
+.add-btn { font-size: 11px; color: var(--text3); text-align: center; padding: 8px; cursor: pointer; border-radius: 6px; transition: color 0.15s, background 0.15s; margin-bottom: 6px; border: 1px dashed var(--border2); }
+.add-btn:hover { color: var(--text2); background: var(--surface2); }
+.board { display: flex; gap: 14px; align-items: stretch; min-width: max-content; }
 .card { background: #ffffff; border: 1px solid #e0c800; border-radius: 8px; padding: 12px; margin-bottom: 7px; cursor: grab; transition: border-color 0.15s, transform 0.1s, box-shadow 0.15s; user-select: none; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
 .card:hover { border-color: #c89e00; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
 .card:active { cursor: grabbing; transform: scale(0.98); opacity: 0.7; }
@@ -345,12 +347,12 @@ function buildBoard() {
         <div class="col-sum" id="sum-${col.id}">€ 0</div>
         <div class="col-cnt" id="cnt-${col.id}">0 fichas</div>
       </div>
+      <div class="add-btn" onclick="newCard('${col.id}')">+ Añadir ficha</div>
       <div class="col-body" id="body-${col.id}"
         ondragover="event.preventDefault();this.classList.add('over')"
         ondragleave="this.classList.remove('over')"
         ondrop="onDrop(event,'${col.id}')">
-      </div>
-      <div class="add-btn" onclick="newCard('${col.id}')">+ Añadir ficha</div>`;
+      </div>`;
     board.appendChild(div);
   });
   renderAll();
