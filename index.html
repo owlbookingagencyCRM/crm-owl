@@ -206,7 +206,7 @@ const COLS = [
   { id:'artista',          label:'Artista y Espacio',           color:'var(--col1)' },
   { id:'oferta_enviada',   label:'Oferta Enviada',              color:'var(--col2)' },
   { id:'oferta_aceptada',  label:'Oferta Aceptada',             color:'var(--col3)' },
-  { id:'contrato_factura', label:'Contrato y Factura Proforma', color:'var(--col4)' },
+  { id:'contrato_factura', label:'Contrato',                    color:'var(--col4)' },
   { id:'rider',            label:'Rider, Hospitality y EPK',    color:'var(--col5)' },
   { id:'hoja_ruta',        label:'Hoja de Ruta',                color:'var(--col6)' },
   { id:'factura_enviada',  label:'Factura Enviada',             color:'var(--col7)' },
@@ -215,13 +215,12 @@ const COLS = [
 ];
 
 const DOC_SLOTS = [
-  { key:'contrato',        label:'Contrato',        color:'#4a9eff' },
-  { key:'factura_proforma',label:'Factura proforma', color:'#f59e0b' },
-  { key:'rider',           label:'Rider',            color:'#ec4899' },
-  { key:'hospitality',     label:'Hospitality',      color:'#ec4899' },
-  { key:'epk',             label:'EPK',              color:'#ec4899' },
-  { key:'hoja_ruta',       label:'Hoja de Ruta',     color:'#8b5cf6' },
-  { key:'factura',         label:'Factura',          color:'#f97316' }
+  { key:'anexos_contrato', label:'Anexos al contrato', color:'#4a9eff' },
+  { key:'rider',           label:'Rider',              color:'#ec4899' },
+  { key:'hospitality',     label:'Hospitality',        color:'#ec4899' },
+  { key:'epk',             label:'EPK',                color:'#ec4899' },
+  { key:'hoja_ruta',       label:'Hoja de Ruta',       color:'#8b5cf6' },
+  { key:'factura',         label:'Factura',            color:'#f97316' }
 ];
 
 function emptyDocs() {
@@ -463,7 +462,7 @@ async function sendToMake(payload) {
 
 function triggerAutomation(id, col) {
   const c = cards[id];
-  if (col === 'contrato_factura') generateAndSend(id, ['contrato','factura_proforma']);
+  if (col === 'contrato_factura') generateAndSend(id, ['contrato']);
   else if (col === 'rider') {
     const urls = c.docsUrls || {};
     sendToMake({
@@ -516,14 +515,12 @@ async function generateAndSend(id, docs) {
 
   const prompts = {
     contrato: `Redacta un contrato de servicios artísticos en español para:\n- Transacción: ${c.name}\n- Artista: ${c.artist||''} (${c.artistEmail||''})\n- Espacio/Venue: ${c.venue||''} (${c.email||''})\n- Empresa del cliente: ${c.company||c.venue||''}\n- Representante legal: ${c.legalRep||'—'} — DNI: ${c.legalDni||'—'}\n- Fecha del evento: ${c.date||''}\n- Importe: ${fmt(c.amount)}\n- NIF: ${c.nif||''} — Dirección fiscal: ${c.address||''}\nIncluye: partes contratantes (con nombre y DNI del representante legal), objeto del contrato, caché (base imponible + IVA 21%), condiciones técnicas, forma y plazo de pago, cláusula de resolución, y espacio para firmas con nombre y DNI del representante. Máximo 300 palabras.`,
-    factura_proforma: `Genera una factura proforma de servicios artísticos en español:\n- Concepto: ${c.name}\n- Cliente: ${c.company||c.venue||''} — NIF: ${c.nif||''}\n- Dirección fiscal: ${c.address||''}\n- Email: ${c.email||''}\n- Fecha evento: ${c.date||''}\n- Nº Factura Proforma: ${numProforma}\n- Base imponible: ${fmt(c.amount)}\n- IVA: 21%\nIncluye descripción del servicio artístico, datos fiscales del cliente, desglose (base, IVA, total) y condiciones de pago. Máximo 180 palabras.`,
     factura: `[El número de factura y el HTML lo genera Make con Claude usando el prompt configurado en Make]`
   };
 
   const emailConfig = {
-    contrato:         { accion:'contrato_factura_proforma', asunto:c.name,    cuerpo:'Adjuntamos contrato para su firma y factura proforma.' },
-    factura_proforma: { accion:'contrato_factura_proforma', asunto:c.name,    cuerpo:'Adjuntamos contrato para su firma y factura proforma.' },
-    factura:          { accion:'factura_enviada',           asunto:'Factura', cuerpo:'Adjuntamos factura, gracias por todo.' }
+    contrato: { accion:'contrato', asunto:c.name, cuerpo:'Adjuntamos contrato para su firma.' },
+    factura:  { accion:'factura_enviada', asunto:'Factura', cuerpo:'Adjuntamos factura, gracias por todo.' }
   };
 
   const cfg = emailConfig[docs[0]];
@@ -554,11 +551,12 @@ async function generateAndSend(id, docs) {
     cuerpo_email: cfg.cuerpo,
     num_proforma: numProforma,
     prompts: docs[0] !== 'factura' ? Object.fromEntries(docs.map(d => [d, prompts[d]])) : {},
+    url_anexos_contrato: (c.docsUrls || {}).anexos_contrato || null,
     archivos_adjuntos: c.docs || {},
     archivos_urls: c.docsUrls || {}
   });
 
-  const labels = { contrato:'Contrato', factura_proforma:'Factura proforma', factura:'Factura' };
+  const labels = { contrato:'Contrato', factura:'Factura' };
   const tabsEl = document.getElementById('ai-tabs');
   docs.forEach((doc, i) => {
     const btn = document.createElement('button');
