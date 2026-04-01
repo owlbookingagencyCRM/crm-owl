@@ -21,7 +21,7 @@
   --font: 'DM Sans', sans-serif; --mono: 'DM Mono', monospace;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
 .header { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; border-bottom: 1px solid var(--border); background: #1a1200; position: sticky; top: 0; z-index: 10; }
 .logo { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 13px; color: #f5c800; letter-spacing: 0.08em; }
 .logo img { width: 32px; height: 32px; border-radius: 50%; }
@@ -31,8 +31,9 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 .stat-label { font-size: 10px; color: #a08a00; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 1px; }
 .btn-new { font-family: var(--font); font-size: 12px; font-weight: 500; background: #f5c800; color: #1a1200; border: none; border-radius: 6px; padding: 8px 16px; cursor: pointer; transition: background 0.15s; }
 .btn-new:hover { background: #e6b800; }
-.board-wrap { overflow-x: auto; padding: 20px 28px 40px; }
-.col-head { padding: 10px 12px; margin-bottom: 8px; }
+.board-wrap { overflow-x: auto; overflow-y: auto; padding: 0 28px 20px; flex: 1; }
+.col-head { padding: 10px 12px; margin-bottom: 8px; position: sticky; top: 0; background: var(--bg); z-index: 2; padding-top: 12px; }
+.col-foot { padding: 10px 12px; margin-top: 8px; border-top: 1px solid var(--border); }
 .col-indicator { width: 20px; height: 3px; border-radius: 2px; margin-bottom: 8px; }
 .col-name { font-size: 10px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; line-height: 1.4; }
 .col-sum { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--text); }
@@ -42,7 +43,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 .col { width: 200px; flex-shrink: 0; display: flex; flex-direction: column; }
 .add-btn { font-size: 11px; color: var(--text3); text-align: center; padding: 8px; cursor: pointer; border-radius: 6px; transition: color 0.15s, background 0.15s; margin-bottom: 6px; border: 1px dashed var(--border2); }
 .add-btn:hover { color: var(--text2); background: var(--surface2); }
-.board { display: flex; gap: 14px; align-items: stretch; min-width: max-content; }
+.board { display: flex; gap: 14px; align-items: flex-start; min-width: max-content; }
 .card { background: #ffffff; border: 1px solid #e0c800; border-radius: 8px; padding: 12px; margin-bottom: 7px; cursor: grab; transition: border-color 0.15s, transform 0.1s, box-shadow 0.15s; user-select: none; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
 .card:hover { border-color: #c89e00; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
 .card:active { cursor: grabbing; transform: scale(0.98); opacity: 0.7; }
@@ -354,6 +355,12 @@ function buildBoard() {
         ondragover="event.preventDefault();this.classList.add('over')"
         ondragleave="this.classList.remove('over')"
         ondrop="onDrop(event,'${col.id}')">
+      </div>
+      <div class="col-foot">
+        <div class="col-indicator" style="background:${col.color}"></div>
+        <div class="col-name">${col.label}</div>
+        <div class="col-sum" id="sum-foot-${col.id}">€ 0</div>
+        <div class="col-cnt" id="cnt-foot-${col.id}">0 fichas</div>
       </div>`;
     board.appendChild(div);
   });
@@ -384,6 +391,10 @@ function renderAll() {
     });
     document.getElementById('sum-' + col.id).textContent = fmt(sum);
     document.getElementById('cnt-' + col.id).textContent = count + ' ficha' + (count !== 1 ? 's' : '');
+    const sumFoot = document.getElementById('sum-foot-' + col.id);
+    const cntFoot = document.getElementById('cnt-foot-' + col.id);
+    if (sumFoot) sumFoot.textContent = fmt(sum);
+    if (cntFoot) cntFoot.textContent = count + ' ficha' + (count !== 1 ? 's' : '');
   });
   updateHeader();
 }
