@@ -9,6 +9,19 @@
   body > header, body > footer, .site-header, .site-footer,
   header.site-header, nav.site-nav, h1.project-name,
   h2.project-tagline, .page-header { display: none !important; }
+
+.fake-input {
+  font-family: var(--font); font-size: 13px; color: #1a1200;
+  background: #fffde8; border: 1px solid #d4b800; border-radius: 7px;
+  padding: 8px 10px; width: 100%; min-height: 36px; line-height: 1.4;
+  transition: border-color 0.15s; cursor: text; white-space: nowrap;
+  overflow: hidden;
+}
+.fake-input:focus { outline: none; border-color: #1a1200; }
+.fake-input:empty::before {
+  content: attr(aria-placeholder);
+  color: #b8a060; pointer-events: none;
+}
 </style>
 <style>
 :root {
@@ -155,8 +168,8 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 
     <div class="section-label">Artista & Espacio</div>
     <div class="fg">
-      <div class="f"><label>Artista / Grupo</label><input id="f-artist" type="text" placeholder="Nombre del artista" oninput="autocomplete(this,'artist')" onblur="setTimeout(()=>closeAC('artist'),200)" autocomplete="off"><div class="autocomplete-list" id="ac-artist" style="display:none"></div></div>
-      <div class="f"><label>Espacio / Venue</label><input id="f-venue" type="text" placeholder="Nombre del espacio" oninput="autocomplete(this,'venue')" onblur="setTimeout(()=>closeAC('venue'),200)" autocomplete="off"><div class="autocomplete-list" id="ac-venue" style="display:none"></div></div>
+      <div class="f"><label>Artista / Grupo</label><div id="f-artist" contenteditable="true" role="textbox" aria-placeholder="Nombre del artista" class="fake-input" oninput="autocomplete(this,'artist')" onblur="setTimeout(()=>closeAC('artist'),200)" spellcheck="false"></div><div class="autocomplete-list" id="ac-artist" style="display:none"></div></div>
+      <div class="f"><label>Espacio / Venue</label><div id="f-venue" contenteditable="true" role="textbox" aria-placeholder="Nombre del espacio" class="fake-input" oninput="autocomplete(this,'venue')" onblur="setTimeout(()=>closeAC('venue'),200)" spellcheck="false"></div><div class="autocomplete-list" id="ac-venue" style="display:none"></div></div>
       <div class="f"><label>Email artista</label><input id="f-artist-email" type="email" placeholder="artista@mail.com"></div>
       <div class="f"><label>Email contacto (venue)</label><input id="f-email" type="email" placeholder="venue@mail.com"></div>
       <div class="f"><label>Teléfono</label><input id="f-phone" type="tel" placeholder="+34 600 000 000"></div>
@@ -584,8 +597,10 @@ function openModal(id) {
   document.getElementById('f-amount').value      = c.amount     || '';
   document.getElementById('f-comision').value    = c.comisionPct || '';
   document.getElementById('f-comision-euros').value = c.comisionEuros > 0 ? fmt(c.comisionEuros) : '';
-  document.getElementById('f-artist').value      = c.artist     || '';
-  document.getElementById('f-venue').value       = c.venue      || '';
+  const _fa = document.getElementById('f-artist');
+  if (_fa.tagName === 'INPUT') _fa.value = c.artist || ''; else _fa.textContent = c.artist || '';
+  const _fv = document.getElementById('f-venue');
+  if (_fv.tagName === 'INPUT') _fv.value = c.venue || ''; else _fv.textContent = c.venue || '';
   document.getElementById('f-email').value       = c.email      || '';
   document.getElementById('f-artist-email').value= c.artistEmail|| '';
   document.getElementById('f-phone').value       = c.phone      || '';
@@ -608,7 +623,7 @@ function newCard(col) {
   document.getElementById('modal-title').textContent = 'Nueva ficha';
   ['name','artist','venue','email','artist-email','phone','company','nif','address','legal-rep','legal-dni','num-factura','notes'].forEach(f => {
     const el = document.getElementById('f-' + f);
-    if (el) el.value = '';
+    if (el) { if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.value = ''; else el.textContent = ''; }
   });
   document.getElementById('f-fecha-factura').value = '';
   document.getElementById('f-amount').value = '';
@@ -635,8 +650,8 @@ function saveCard() {
     amount:      parseFloat(document.getElementById('f-amount').value) || 0,
     comisionPct:   parseFloat(document.getElementById('f-comision').value) || 0,
     comisionEuros: Math.round((parseFloat(document.getElementById('f-amount').value)||0) * (parseFloat(document.getElementById('f-comision').value)||0) / 100 * 100) / 100,
-    artist:      document.getElementById('f-artist').value,
-    venue:       document.getElementById('f-venue').value,
+    artist:      (() => { const e = document.getElementById('f-artist'); return (e.tagName === 'INPUT' ? e.value : e.textContent).trim(); })(),
+    venue:       (() => { const e = document.getElementById('f-venue'); return (e.tagName === 'INPUT' ? e.value : e.textContent).trim(); })(),
     email:       document.getElementById('f-email').value,
     artistEmail: document.getElementById('f-artist-email').value,
     phone:       document.getElementById('f-phone').value,
@@ -768,7 +783,7 @@ function getContactBook() {
 }
 
 function autocomplete(input, type) {
-  const val = input.value.trim().toLowerCase();
+  const val = (input.value !== undefined ? input.value : input.textContent).trim().toLowerCase();
   const list = document.getElementById('ac-' + type);
   if (!val || val.length < 2) { list.style.display = 'none'; return; }
   const book = getContactBook();
@@ -805,10 +820,12 @@ function applyContact(i, type, silent) {
   if (!m) return;
   const filled = [];
   if (type === 'artist') {
-    document.getElementById('f-artist').value = m.artist || '';
+    const fa = document.getElementById('f-artist');
+    if (fa.tagName === 'INPUT') fa.value = m.artist || ''; else fa.textContent = m.artist || '';
     if (m.artistEmail) { document.getElementById('f-artist-email').value = m.artistEmail; filled.push('f-artist-email'); }
   } else {
-    document.getElementById('f-venue').value = m.venue || '';
+    const fv = document.getElementById('f-venue');
+    if (fv.tagName === 'INPUT') fv.value = m.venue || ''; else fv.textContent = m.venue || '';
     if (m.email)    { document.getElementById('f-email').value    = m.email;    filled.push('f-email'); }
     if (m.phone)    { document.getElementById('f-phone').value    = m.phone;    filled.push('f-phone'); }
     if (m.company)  { document.getElementById('f-company').value  = m.company;  filled.push('f-company'); }
