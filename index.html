@@ -21,7 +21,7 @@
   --font: 'DM Sans', sans-serif; --mono: 'DM Mono', monospace;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--font); background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
 .header { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; border-bottom: 1px solid var(--border); background: #1a1200; position: sticky; top: 0; z-index: 10; }
 .logo { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 13px; color: #f5c800; letter-spacing: 0.08em; }
 .logo img { width: 32px; height: 32px; border-radius: 50%; }
@@ -31,9 +31,8 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); heig
 .stat-label { font-size: 10px; color: #a08a00; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 1px; }
 .btn-new { font-family: var(--font); font-size: 12px; font-weight: 500; background: #f5c800; color: #1a1200; border: none; border-radius: 6px; padding: 8px 16px; cursor: pointer; transition: background 0.15s; }
 .btn-new:hover { background: #e6b800; }
-.board-wrap { overflow-x: auto; overflow-y: auto; padding: 0 28px 20px; flex: 1; }
-.col-head { padding: 10px 12px; margin-bottom: 8px; position: sticky; top: 0; background: var(--bg); z-index: 2; padding-top: 12px; }
-
+.board-wrap { overflow-x: auto; padding: 20px 28px 40px; }
+.col-head { padding: 10px 12px; margin-bottom: 8px; }
 .col-indicator { width: 20px; height: 3px; border-radius: 2px; margin-bottom: 8px; }
 .col-name { font-size: 10px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; line-height: 1.4; }
 .col-sum { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--text); }
@@ -71,7 +70,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); heig
 .f input, .f textarea { font-family: var(--font); font-size: 13px; color: #1a1200; background: #fffde8; border: 1px solid #d4b800; border-radius: 7px; padding: 8px 10px; width: 100%; transition: border-color 0.15s; }
 .f input:focus, .f textarea:focus { outline: none; border-color: #1a1200; }
 .f textarea { resize: vertical; min-height: 60px; }
-.autocomplete-list { position: absolute; top: calc(100% + 2px); left: 0; right: 0; background: #fff; border: 1px solid #d4b800; border-radius: 7px; z-index: 1000; max-height: 200px; overflow-y: auto; box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+.autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #d4b800; border-top: none; border-radius: 0 0 7px 7px; z-index: 200; max-height: 160px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
 .autocomplete-item { padding: 8px 10px; font-size: 12px; color: #1a1200; cursor: pointer; border-bottom: 1px solid #f0e060; }
 .autocomplete-item:last-child { border-bottom: none; }
 .autocomplete-item:hover { background: #fff8cc; }
@@ -156,8 +155,8 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); heig
 
     <div class="section-label">Artista & Espacio</div>
     <div class="fg">
-      <div class="f"><label>Artista / Grupo</label><input id="f-artist" type="text" placeholder="Nombre del artista" oninput="autocomplete(this,'artist')" onblur="closeAC('artist')" autocomplete="off"></div>
-      <div class="f"><label>Espacio / Venue</label><input id="f-venue" type="text" placeholder="Nombre del espacio" oninput="autocomplete(this,'venue')" onblur="closeAC('venue')" autocomplete="off"></div>
+      <div class="f"><label>Artista / Grupo</label><input id="f-artist" type="text" placeholder="Nombre del artista" oninput="autocomplete(this,'artist')" onblur="setTimeout(()=>closeAC('artist'),200)" autocomplete="off"><div class="autocomplete-list" id="ac-artist" style="display:none"></div></div>
+      <div class="f"><label>Espacio / Venue</label><input id="f-venue" type="text" placeholder="Nombre del espacio" oninput="autocomplete(this,'venue')" onblur="setTimeout(()=>closeAC('venue'),200)" autocomplete="off"><div class="autocomplete-list" id="ac-venue" style="display:none"></div></div>
       <div class="f"><label>Email artista</label><input id="f-artist-email" type="email" placeholder="artista@mail.com"></div>
       <div class="f"><label>Email contacto (venue)</label><input id="f-email" type="email" placeholder="venue@mail.com"></div>
       <div class="f"><label>Teléfono</label><input id="f-phone" type="tel" placeholder="+34 600 000 000"></div>
@@ -737,14 +736,32 @@ function removeDoc(key) {
 
 function getContactBook() {
   const book = {};
+  // Iterate all cards and always overwrite with latest data (last write wins = most up to date)
   Object.values(cards).forEach(c => {
     if (c.artist) {
       const k = c.artist.toLowerCase();
-      if (!book[k]) book[k] = { artist:c.artist, artistEmail:c.artistEmail||'', phone:c.phone||'', label:c.artist };
+      const existing = book[k];
+      // Merge: keep existing fields if new card doesn't have them, but prefer non-empty values
+      book[k] = {
+        artist:      c.artist,
+        artistEmail: (c.artistEmail || (existing && existing.artistEmail) || ''),
+        label:       c.artist
+      };
     }
     if (c.venue) {
       const k = '__venue__' + c.venue.toLowerCase();
-      if (!book[k]) book[k] = { venue:c.venue, email:c.email||'', company:c.company||'', nif:c.nif||'', address:c.address||'', legalRep:c.legalRep||'', legalDni:c.legalDni||'', label:c.venue };
+      const existing = book[k];
+      book[k] = {
+        venue:    c.venue,
+        email:    (c.email    || (existing && existing.email)    || ''),
+        phone:    (c.phone    || (existing && existing.phone)    || ''),
+        company:  (c.company  || (existing && existing.company)  || ''),
+        nif:      (c.nif      || (existing && existing.nif)      || ''),
+        address:  (c.address  || (existing && existing.address)  || ''),
+        legalRep: (c.legalRep || (existing && existing.legalRep) || ''),
+        legalDni: (c.legalDni || (existing && existing.legalDni) || ''),
+        label:    c.venue
+      };
     }
   });
   return book;
@@ -752,68 +769,62 @@ function getContactBook() {
 
 function autocomplete(input, type) {
   const val = input.value.trim().toLowerCase();
-  hideACPortal();
-  if (!val || val.length < 2) return;
+  const list = document.getElementById('ac-' + type);
+  if (!val || val.length < 2) { list.style.display = 'none'; return; }
   const book = getContactBook();
   const prefix = type === 'venue' ? '__venue__' : '';
   const matches = Object.entries(book)
     .filter(([k]) => k.startsWith(prefix) && k.replace(prefix,'').includes(val))
-    .map(([,v]) => v).slice(0, 8);
-  if (!matches.length) return;
+    .map(([,v]) => v)
+    .slice(0, 6);
+  if (!matches.length) { list.style.display = 'none'; return; }
+  list.innerHTML = matches.map((m, i) =>
+    `<div class="autocomplete-item" onmousedown="applyContact(${i},'${type}')">${m.label.replace(new RegExp('('+val+')', 'gi'), '<strong>$1</strong>')}</div>`
+  ).join('');
+  list._matches = matches;
+  list.style.display = 'block';
 
-  let portal = document.getElementById('ac-portal');
-  if (!portal) {
-    portal = document.createElement('div');
-    portal.id = 'ac-portal';
-    portal.style.cssText = 'position:fixed;background:#fff;border:1px solid #d4b800;border-radius:7px;z-index:9999;max-height:220px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,0.18);min-width:200px;';
-    document.body.appendChild(portal);
-  }
-
-  const rect = input.getBoundingClientRect();
-  portal.style.top  = (rect.bottom + 4) + 'px';
-  portal.style.left = rect.left + 'px';
-  portal.style.width = rect.width + 'px';
-  portal._matches = matches;
-  portal._type = type;
-
-  portal.innerHTML = matches.map((m, i) => {
-    const hi = m.label.replace(new RegExp('(' + val.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi'), '<strong style="color:#b45309">$1</strong>');
-    const sub = type === 'artist'
-      ? (m.artistEmail ? `<span style="font-size:10px;color:#7a6000;display:block">${m.artistEmail}</span>` : '')
-      : (m.email ? `<span style="font-size:10px;color:#7a6000;display:block">${m.email}</span>` : '');
-    return `<div onmousedown="applyContact(${i})" style="padding:9px 12px;font-size:13px;color:#1a1200;cursor:pointer;border-bottom:1px solid #f0e060" onmouseover="this.style.background='#fff8cc'" onmouseout="this.style.background=''">${hi}${sub}</div>`;
-  }).join('');
-  portal.style.display = 'block';
+  // Auto-apply if there is an exact name match (e.g. pasting a known name)
+  const exactIdx = matches.findIndex(m => m.label.toLowerCase() === val);
+  if (exactIdx !== -1) applyContact(exactIdx, type, true);
 }
 
-function hideACPortal() {
-  const p = document.getElementById('ac-portal');
-  if (p) p.style.display = 'none';
+function flashAutofilled(ids) {
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el || !el.value) return;
+    el.style.transition = 'background 0.4s';
+    el.style.background = '#c6f0c6';
+    setTimeout(() => { el.style.background = ''; }, 1600);
+  });
 }
 
-function applyContact(i) {
-  const portal = document.getElementById('ac-portal');
-  if (!portal) return;
-  const m = portal._matches[i];
-  const type = portal._type;
+function applyContact(i, type, silent) {
+  const list = document.getElementById('ac-' + type);
+  const m = list._matches[i];
   if (!m) return;
+  const filled = [];
   if (type === 'artist') {
-    document.getElementById('f-artist').value       = m.artist || '';
-    document.getElementById('f-artist-email').value = m.artistEmail || '';
-    if (m.phone) document.getElementById('f-phone').value = m.phone;
+    document.getElementById('f-artist').value = m.artist || '';
+    if (m.artistEmail) { document.getElementById('f-artist-email').value = m.artistEmail; filled.push('f-artist-email'); }
   } else {
-    document.getElementById('f-venue').value      = m.venue   || '';
-    document.getElementById('f-email').value      = m.email   || '';
-    document.getElementById('f-company').value    = m.company || '';
-    document.getElementById('f-nif').value        = m.nif     || '';
-    document.getElementById('f-address').value    = m.address || '';
-    if (m.legalRep) document.getElementById('f-legal-rep').value = m.legalRep;
-    if (m.legalDni) document.getElementById('f-legal-dni').value = m.legalDni;
+    document.getElementById('f-venue').value = m.venue || '';
+    if (m.email)    { document.getElementById('f-email').value    = m.email;    filled.push('f-email'); }
+    if (m.phone)    { document.getElementById('f-phone').value    = m.phone;    filled.push('f-phone'); }
+    if (m.company)  { document.getElementById('f-company').value  = m.company;  filled.push('f-company'); }
+    if (m.nif)      { document.getElementById('f-nif').value      = m.nif;      filled.push('f-nif'); }
+    if (m.address)  { document.getElementById('f-address').value  = m.address;  filled.push('f-address'); }
+    if (m.legalRep) { document.getElementById('f-legal-rep').value= m.legalRep; filled.push('f-legal-rep'); }
+    if (m.legalDni) { document.getElementById('f-legal-dni').value= m.legalDni; filled.push('f-legal-dni'); }
   }
-  hideACPortal();
+  list.style.display = 'none';
+  if (!silent && filled.length) {
+    flashAutofilled(filled);
+    showToast('Autorelleno aplicado', filled.length + ' campo' + (filled.length > 1 ? 's' : '') + ' rellenado' + (filled.length > 1 ? 's' : '') + ' automáticamente');
+  }
 }
 
-function closeAC(type) { setTimeout(hideACPortal, 150); }
+function closeAC(type) { const l = document.getElementById('ac-' + type); if (l) l.style.display = 'none'; }
 
 let toastTimer;
 function showToast(title, body) {
@@ -824,10 +835,6 @@ function showToast(title, body) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 5000);
 }
-
-document.addEventListener('click', e => {
-  if (!e.target.closest('#ac-portal') && e.target.id !== 'f-artist' && e.target.id !== 'f-venue') hideACPortal();
-});
 
 // ── INIT — carga desde Supabase ───────────────────────────
 async function init() {
