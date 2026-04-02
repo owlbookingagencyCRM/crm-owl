@@ -22,6 +22,12 @@
   content: attr(aria-placeholder);
   color: #b8a060; pointer-events: none;
 }
+
+.anexos-list { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+.anexo-item { display: flex; align-items: center; justify-content: space-between; gap: 6px; background: #fff8e0; border: 1px solid #e8d060; border-radius: 5px; padding: 3px 7px; }
+.anexo-name { font-family: var(--mono); font-size: 10px; color: #15803d; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
+.anexo-remove { font-size: 9px; color: #ef4444; border: none; background: none; cursor: pointer; padding: 0 2px; flex-shrink: 0; line-height: 1; }
+.anexo-remove:hover { text-decoration: underline; }
 </style>
 <style>
 :root {
@@ -564,7 +570,11 @@ async function generateAndSend(id, docs) {
     cuerpo_email: cfg.cuerpo,
     num_proforma: numProforma,
     prompts: docs[0] !== 'factura' ? Object.fromEntries(docs.map(d => [d, prompts[d]])) : {},
-    url_anexos_contrato: (c.docsUrls || {}).anexos_contrato || null,
+    url_anexos_contrato: (() => {
+      const raw = (c.docs || {}).anexos_contrato;
+      if (Array.isArray(raw)) return raw.map(f => f.url).filter(Boolean);
+      return (c.docsUrls || {}).anexos_contrato || null;
+    })(),
     archivos_adjuntos: c.docs || {},
     archivos_urls: c.docsUrls || {}
   });
@@ -687,23 +697,42 @@ function renderDocGrid(docs) {
   const grid = document.getElementById('doc-grid');
   grid.innerHTML = '';
   DOC_SLOTS.forEach(slot => {
-    const hasFile = docs && docs[slot.key];
     const div = document.createElement('div');
     div.className = 'doc-slot';
-    div.innerHTML = `
-      <div class="doc-slot-top">
-        <div class="doc-dot" style="background:${slot.color}"></div>
-        <span class="doc-slot-name">${slot.label}</span>
-      </div>
-      <div class="doc-slot-bottom">
-        <span class="doc-filename ${hasFile ? 'has' : ''}" id="dfn-${slot.key}">${hasFile ? docs[slot.key] : 'Sin archivo'}</span>
-        <div class="doc-actions">
-          ${hasFile
-            ? `<button class="doc-btn remove" onclick="removeDoc('${slot.key}')">Quitar</button>`
-            : `<button class="doc-btn upload" onclick="document.getElementById('fi-${slot.key}').click()">Subir</button>`}
+
+    if (slot.key === 'anexos_contrato') {
+      // Multi-file slot
+      const files = (docs && Array.isArray(docs[slot.key])) ? docs[slot.key]
+                  : (docs && docs[slot.key]) ? [{ name: docs[slot.key], url: (docs._urls && docs._urls[slot.key]) || null }]
+                  : [];
+      const listHTML = files.length
+        ? files.map((f, i) => `<div class="anexo-item"><span class="anexo-name" title="${f.name}">${f.name}</span><button class="anexo-remove" onclick="removeAnexo(${i})">✕</button></div>`).join('')
+        : '<span class="doc-filename" id="dfn-anexos_contrato">Sin archivos</span>';
+      div.innerHTML = `
+        <div class="doc-slot-top">
+          <div class="doc-dot" style="background:${slot.color}"></div>
+          <span class="doc-slot-name">${slot.label}</span>
+          <button class="doc-btn upload" style="margin-left:auto" onclick="document.getElementById('fi-anexos_contrato').click()">+ Añadir</button>
         </div>
-      </div>
-      <input type="file" id="fi-${slot.key}" style="display:none" accept=".pdf,.doc,.docx,.jpg,.png" onchange="attachDoc('${slot.key}',this)">`;
+        <div class="anexos-list" id="anexos-list">${listHTML}</div>
+        <input type="file" id="fi-anexos_contrato" style="display:none" accept=".pdf,.doc,.docx,.jpg,.png" multiple onchange="attachAnexos(this)">`;
+    } else {
+      const hasFile = docs && docs[slot.key] && !Array.isArray(docs[slot.key]);
+      div.innerHTML = `
+        <div class="doc-slot-top">
+          <div class="doc-dot" style="background:${slot.color}"></div>
+          <span class="doc-slot-name">${slot.label}</span>
+        </div>
+        <div class="doc-slot-bottom">
+          <span class="doc-filename ${hasFile ? 'has' : ''}" id="dfn-${slot.key}">${hasFile ? docs[slot.key] : 'Sin archivo'}</span>
+          <div class="doc-actions">
+            ${hasFile
+              ? `<button class="doc-btn remove" onclick="removeDoc('${slot.key}')">Quitar</button>`
+              : `<button class="doc-btn upload" onclick="document.getElementById('fi-${slot.key}').click()">Subir</button>`}
+          </div>
+        </div>
+        <input type="file" id="fi-${slot.key}" style="display:none" accept=".pdf,.doc,.docx,.jpg,.png" onchange="attachDoc('${slot.key}',this)">`;
+    }
     grid.appendChild(div);
   });
 }
@@ -747,6 +776,80 @@ function removeDoc(key) {
   if (span) { span.textContent = 'Sin archivo'; span.className = 'doc-filename'; }
   const btn = span?.nextElementSibling?.querySelector('button');
   if (btn) { btn.className = 'doc-btn upload'; btn.textContent = 'Subir'; btn.onclick = () => document.getElementById('fi-' + key).click(); }
+}
+
+
+function attachAnexos(input) {
+  if (!input.files || !input.files.length) return;
+  const isNew = editId && editId.startsWith('new:');
+  const cardId = isNew ? ('tmp_' + editId.replace('new:', '')) : editId;
+
+  // Get current list
+  let currentFiles = [];
+  if (!isNew && cards[editId]) {
+    const raw = cards[editId].docs['anexos_contrato'];
+    if (Array.isArray(raw)) currentFiles = raw;
+    else if (raw) currentFiles = [{ name: raw, url: (cards[editId].docsUrls || {})['anexos_contrato'] || null }];
+  } else {
+    const pending = window._pendingDocs && window._pendingDocs['anexos_contrato'];
+    if (Array.isArray(pending)) currentFiles = pending;
+    else if (pending) currentFiles = [{ name: pending, url: null }];
+  }
+
+  const uploads = Array.from(input.files).map(file => {
+    const key = 'anexos_contrato_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+    return uploadToSupabase(file, cardId, key).then(url => ({ name: file.name, url }));
+  });
+
+  showToast('Subiendo...', uploads.length + ' archivo' + (uploads.length > 1 ? 's' : ''));
+
+  Promise.all(uploads).then(newFiles => {
+    const merged = [...currentFiles, ...newFiles];
+    if (!isNew && cards[editId]) {
+      cards[editId].docs['anexos_contrato'] = merged;
+      saveCards();
+    } else {
+      if (!window._pendingDocs) window._pendingDocs = {};
+      window._pendingDocs['anexos_contrato'] = merged;
+    }
+    renderAnexosList(merged);
+    showToast('Archivos subidos', newFiles.map(f => f.name).join(', '));
+  }).catch(err => {
+    showToast('Error', 'No se pudo subir: ' + err.message);
+  });
+
+  input.value = ''; // reset so same file can be re-added
+}
+
+function removeAnexo(idx) {
+  const isNew = editId && editId.startsWith('new:');
+  let currentFiles = [];
+  if (!isNew && cards[editId]) {
+    const raw = cards[editId].docs['anexos_contrato'];
+    currentFiles = Array.isArray(raw) ? raw : (raw ? [{ name: raw, url: null }] : []);
+    currentFiles.splice(idx, 1);
+    cards[editId].docs['anexos_contrato'] = currentFiles.length ? currentFiles : null;
+    saveCards();
+  } else {
+    const pending = window._pendingDocs && window._pendingDocs['anexos_contrato'];
+    currentFiles = Array.isArray(pending) ? pending : (pending ? [{ name: pending, url: null }] : []);
+    currentFiles.splice(idx, 1);
+    if (!window._pendingDocs) window._pendingDocs = {};
+    window._pendingDocs['anexos_contrato'] = currentFiles.length ? currentFiles : null;
+  }
+  renderAnexosList(currentFiles);
+}
+
+function renderAnexosList(files) {
+  const list = document.getElementById('anexos-list');
+  if (!list) return;
+  if (!files || !files.length) {
+    list.innerHTML = '<span class="doc-filename" id="dfn-anexos_contrato">Sin archivos</span>';
+    return;
+  }
+  list.innerHTML = files.map((f, i) =>
+    `<div class="anexo-item"><span class="anexo-name" title="${f.name}">${f.name}</span><button class="anexo-remove" onclick="removeAnexo(${i})">✕</button></div>`
+  ).join('');
 }
 
 function getContactBook() {
