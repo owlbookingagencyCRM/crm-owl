@@ -71,7 +71,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); heig
 .f input, .f textarea { font-family: var(--font); font-size: 13px; color: #1a1200; background: #fffde8; border: 1px solid #d4b800; border-radius: 7px; padding: 8px 10px; width: 100%; transition: border-color 0.15s; }
 .f input:focus, .f textarea:focus { outline: none; border-color: #1a1200; }
 .f textarea { resize: vertical; min-height: 60px; }
-.autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #d4b800; border-top: none; border-radius: 0 0 7px 7px; z-index: 200; max-height: 160px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+.autocomplete-list { position: absolute; top: calc(100% + 2px); left: 0; right: 0; background: #fff; border: 1px solid #d4b800; border-radius: 7px; z-index: 1000; max-height: 200px; overflow-y: auto; box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
 .autocomplete-item { padding: 8px 10px; font-size: 12px; color: #1a1200; cursor: pointer; border-bottom: 1px solid #f0e060; }
 .autocomplete-item:last-child { border-bottom: none; }
 .autocomplete-item:hover { background: #fff8cc; }
@@ -156,8 +156,8 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); heig
 
     <div class="section-label">Artista & Espacio</div>
     <div class="fg">
-      <div class="f"><label>Artista / Grupo</label><input id="f-artist" type="text" placeholder="Nombre del artista" oninput="autocomplete(this,'artist')" onblur="setTimeout(()=>closeAC('artist'),200)" autocomplete="off"><div class="autocomplete-list" id="ac-artist" style="display:none"></div></div>
-      <div class="f"><label>Espacio / Venue</label><input id="f-venue" type="text" placeholder="Nombre del espacio" oninput="autocomplete(this,'venue')" onblur="setTimeout(()=>closeAC('venue'),200)" autocomplete="off"><div class="autocomplete-list" id="ac-venue" style="display:none"></div></div>
+      <div class="f"><label>Artista / Grupo</label><input id="f-artist" type="text" placeholder="Nombre del artista" oninput="autocomplete(this,'artist')" onblur="closeAC('artist')" autocomplete="off"></div>
+      <div class="f"><label>Espacio / Venue</label><input id="f-venue" type="text" placeholder="Nombre del espacio" oninput="autocomplete(this,'venue')" onblur="closeAC('venue')" autocomplete="off"></div>
       <div class="f"><label>Email artista</label><input id="f-artist-email" type="email" placeholder="artista@mail.com"></div>
       <div class="f"><label>Email contacto (venue)</label><input id="f-email" type="email" placeholder="venue@mail.com"></div>
       <div class="f"><label>Teléfono</label><input id="f-phone" type="tel" placeholder="+34 600 000 000"></div>
@@ -752,38 +752,68 @@ function getContactBook() {
 
 function autocomplete(input, type) {
   const val = input.value.trim().toLowerCase();
-  const list = document.getElementById('ac-' + type);
-  if (!val || val.length < 2) { list.style.display = 'none'; return; }
+  hideACPortal();
+  if (!val || val.length < 2) return;
   const book = getContactBook();
   const prefix = type === 'venue' ? '__venue__' : '';
-  const matches = Object.entries(book).filter(([k]) => k.startsWith(prefix) && k.replace(prefix,'').includes(val)).map(([,v]) => v).slice(0, 6);
-  if (!matches.length) { list.style.display = 'none'; return; }
-  list.innerHTML = matches.map((m, i) => `<div class="autocomplete-item" onmousedown="applyContact(${i},'${type}')">${m.label.replace(new RegExp('('+val+')', 'gi'), '<strong>$1</strong>')}</div>`).join('');
-  list._matches = matches;
-  list.style.display = 'block';
+  const matches = Object.entries(book)
+    .filter(([k]) => k.startsWith(prefix) && k.replace(prefix,'').includes(val))
+    .map(([,v]) => v).slice(0, 8);
+  if (!matches.length) return;
+
+  let portal = document.getElementById('ac-portal');
+  if (!portal) {
+    portal = document.createElement('div');
+    portal.id = 'ac-portal';
+    portal.style.cssText = 'position:fixed;background:#fff;border:1px solid #d4b800;border-radius:7px;z-index:9999;max-height:220px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,0.18);min-width:200px;';
+    document.body.appendChild(portal);
+  }
+
+  const rect = input.getBoundingClientRect();
+  portal.style.top  = (rect.bottom + 4) + 'px';
+  portal.style.left = rect.left + 'px';
+  portal.style.width = rect.width + 'px';
+  portal._matches = matches;
+  portal._type = type;
+
+  portal.innerHTML = matches.map((m, i) => {
+    const hi = m.label.replace(new RegExp('(' + val.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi'), '<strong style="color:#b45309">$1</strong>');
+    const sub = type === 'artist'
+      ? (m.artistEmail ? `<span style="font-size:10px;color:#7a6000;display:block">${m.artistEmail}</span>` : '')
+      : (m.email ? `<span style="font-size:10px;color:#7a6000;display:block">${m.email}</span>` : '');
+    return `<div onmousedown="applyContact(${i})" style="padding:9px 12px;font-size:13px;color:#1a1200;cursor:pointer;border-bottom:1px solid #f0e060" onmouseover="this.style.background='#fff8cc'" onmouseout="this.style.background=''">${hi}${sub}</div>`;
+  }).join('');
+  portal.style.display = 'block';
 }
 
-function applyContact(i, type) {
-  const list = document.getElementById('ac-' + type);
-  const m = list._matches[i];
+function hideACPortal() {
+  const p = document.getElementById('ac-portal');
+  if (p) p.style.display = 'none';
+}
+
+function applyContact(i) {
+  const portal = document.getElementById('ac-portal');
+  if (!portal) return;
+  const m = portal._matches[i];
+  const type = portal._type;
   if (!m) return;
   if (type === 'artist') {
-    document.getElementById('f-artist').value = m.artist || '';
-    if (m.artistEmail) document.getElementById('f-artist-email').value = m.artistEmail;
-    if (m.phone)       document.getElementById('f-phone').value = m.phone;
+    document.getElementById('f-artist').value       = m.artist || '';
+    document.getElementById('f-artist-email').value = m.artistEmail || '';
+    if (m.phone) document.getElementById('f-phone').value = m.phone;
   } else {
-    document.getElementById('f-venue').value   = m.venue   || '';
-    if (m.email)    document.getElementById('f-email').value    = m.email;
-    if (m.company)  document.getElementById('f-company').value  = m.company;
-    if (m.nif)      document.getElementById('f-nif').value      = m.nif;
-    if (m.address)  document.getElementById('f-address').value  = m.address;
-    if (m.legalRep) document.getElementById('f-legal-rep').value= m.legalRep;
-    if (m.legalDni) document.getElementById('f-legal-dni').value= m.legalDni;
+    document.getElementById('f-venue').value      = m.venue   || '';
+    document.getElementById('f-email').value      = m.email   || '';
+    document.getElementById('f-company').value    = m.company || '';
+    document.getElementById('f-nif').value        = m.nif     || '';
+    document.getElementById('f-address').value    = m.address || '';
+    if (m.legalRep) document.getElementById('f-legal-rep').value = m.legalRep;
+    if (m.legalDni) document.getElementById('f-legal-dni').value = m.legalDni;
   }
-  list.style.display = 'none';
+  hideACPortal();
 }
 
-function closeAC(type) { const l = document.getElementById('ac-' + type); if (l) l.style.display = 'none'; }
+function closeAC(type) { setTimeout(hideACPortal, 150); }
 
 let toastTimer;
 function showToast(title, body) {
@@ -794,6 +824,10 @@ function showToast(title, body) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 5000);
 }
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#ac-portal') && e.target.id !== 'f-artist' && e.target.id !== 'f-venue') hideACPortal();
+});
 
 // ── INIT — carga desde Supabase ───────────────────────────
 async function init() {
