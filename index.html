@@ -489,16 +489,31 @@ function triggerAutomation(id, col) {
   if (col === 'contrato_factura') generateAndSend(id, ['contrato']);
   else if (col === 'rider') {
     const urls = c.docsUrls || {};
-    sendToMake({
-      accion:'rider_hospitality_epk',
-      nombre_transaccion:c.name, email_contacto:c.email, email_artista:c.artistEmail||'',
-      artista:c.artist||'', venue:c.venue||'', fecha:c.date||'',
-      asunto:'Rider, Hospitality y EPK', cuerpo:'Adjuntamos Rider, Hospitality y EPK.',
-      url_rider:       urls.rider       || null,
-      url_hospitality: urls.hospitality || null,
-      url_epk:         urls.epk         || null
-    });
-    showToast('Enviando a Make.com', 'Rider, Hospitality y EPK → ' + c.email);
+    // ── FIX: solo se incluyen en el payload los archivos que existen ──
+    // Si falta alguno (rider, hospitality o epk), simplemente no se envía
+    // ese campo a Make, evitando errores por URLs null.
+    const payload = {
+      accion:             'rider_hospitality_epk',
+      nombre_transaccion: c.name,
+      email_contacto:     c.email          || '',
+      email_artista:      c.artistEmail    || '',
+      artista:            c.artist         || '',
+      venue:              c.venue          || '',
+      fecha:              c.date           || '',
+      asunto:             'Rider, Hospitality y EPK',
+      cuerpo:             'Adjuntamos los documentos disponibles.',
+      // Flags booleanos para que Make pueda hacer routing sin comprobar si el campo existe
+      tiene_rider:        !!(urls.rider),
+      tiene_hospitality:  !!(urls.hospitality),
+      tiene_epk:          !!(urls.epk)
+    };
+    // Solo añadir la URL si el archivo existe; si no, el campo no se incluye en el JSON
+    if (urls.rider)       payload.url_rider       = urls.rider;
+    if (urls.hospitality) payload.url_hospitality = urls.hospitality;
+    if (urls.epk)         payload.url_epk         = urls.epk;
+    sendToMake(payload);
+    const docs_presentes = ['rider','hospitality','epk'].filter(k => urls[k]).join(', ') || 'ninguno subido aún';
+    showToast('Enviando a Make.com', 'Docs: ' + docs_presentes + ' → ' + c.email);
   }
   else if (col === 'hoja_ruta') {
     const urls = c.docsUrls || {};
@@ -859,12 +874,10 @@ function renderAnexosList(files) {
 
 function getContactBook() {
   const book = {};
-  // Iterate all cards and always overwrite with latest data (last write wins = most up to date)
   Object.values(cards).forEach(c => {
     if (c.artist) {
       const k = c.artist.toLowerCase();
       const existing = book[k];
-      // Merge: keep existing fields if new card doesn't have them, but prefer non-empty values
       book[k] = {
         artist:      c.artist,
         artistEmail: (c.artistEmail || (existing && existing.artistEmail) || ''),
@@ -907,7 +920,6 @@ function autocomplete(input, type) {
   list._matches = matches;
   list.style.display = 'block';
 
-  // Auto-apply if there is an exact name match (e.g. pasting a known name)
   const exactIdx = matches.findIndex(m => m.label.toLowerCase() === val);
   if (exactIdx !== -1) applyContact(exactIdx, type, true);
 }
