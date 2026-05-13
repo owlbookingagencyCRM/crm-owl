@@ -1,6 +1,372 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OWL Booking Agency CRM</title>
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg: #0f172a; --card: #1e293b; --text: #f1f5f9;
+            --primary: #4f46e5; --accent: #10b981; --border: #334155;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        /* Header */
+        header { padding: 1rem 2rem; background: var(--card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-weight: 800; font-size: 1.5rem; letter-spacing: -1px; color: var(--primary); }
+        .btn-new { background: var(--primary); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; font-weight: 600; }
+
+        /* Board */
+        #board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; padding: 1.5rem; flex-grow: 1; overflow-x: auto; }
+        .column { background: rgba(30, 41, 59, 0.5); border-radius: 12px; display: flex; flex-direction: column; min-width: 280px; }
+        .col-header { padding: 1rem; font-weight: 700; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; color: #94a3b8; border-bottom: 1px solid var(--border); }
+        .list { flex-grow: 1; padding: 1rem; overflow-y: auto; }
+        
+        /* Cards */
+        .card { background: var(--card); border: 1px solid var(--border); padding: 1rem; border-radius: 10px; margin-bottom: 1rem; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); border-color: var(--primary); }
+        .card-tag { font-size: 0.7rem; font-weight: 700; color: var(--accent); margin-bottom: 0.5rem; }
+        .card-title { font-weight: 600; margin-bottom: 0.5rem; }
+        .card-info { font-size: 0.85rem; color: #94a3b8; display: flex; gap: 10px; }
+        .card-docs-status { display: flex; gap: 4px; margin-top: 10px; }
+        .mini-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+        /* Modal Overlay */
+        #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(4px); }
+        #overlay.open { display: flex; }
+        .modal { background: var(--card); width: 90%; max-width: 900px; max-height: 90vh; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--border); }
+        .modal-header { padding: 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 2rem; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        .modal-footer { padding: 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 1rem; }
+
+        /* Form Elements */
+        .f-group { margin-bottom: 1.2rem; }
+        label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.4rem; }
+        input, select, textarea, .editable { width: 100%; background: #0f172a; border: 1px solid var(--border); color: white; padding: 0.7rem; border-radius: 8px; outline: none; box-sizing: border-box; }
+        .editable { min-height: 1.2rem; }
+        .doc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .doc-slot { background: #0f172a; border: 1px solid var(--border); padding: 1rem; border-radius: 8px; }
+        .doc-slot-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .doc-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .doc-filename { font-size: 0.8rem; color: #94a3b8; margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .doc-btn { font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; cursor: pointer; border: none; }
+        .upload { background: var(--primary); color: white; }
+        .remove { background: #ef4444; color: white; margin-right: 5px; }
+
+        /* Toast */
+        #toast { position: fixed; bottom: 20px; right: 20px; background: var(--primary); padding: 1rem 2rem; border-radius: 8px; transform: translateY(200%); transition: 0.3s; z-index: 1000; }
+        #toast.show { transform: translateY(0); }
+
+        .autocomplete-list { position: absolute; background: var(--card); border: 1px solid var(--border); width: 100%; z-index: 50; display: none; }
+        .autocomplete-item { padding: 10px; cursor: pointer; border-bottom: 1px solid var(--border); }
+        .autocomplete-item:hover { background: var(--primary); }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">OWL BOOKING AGENCY</div>
+    <button class="btn-new" onclick="newCard('artista')">+ Nueva Transacción</button>
+</header>
+
+<div id="board">
+    <div class="column" ondrop="handleDrop(event, 'artista')" ondragover="allowDrop(event)">
+        <div class="col-header">Pendiente / Artista</div>
+        <div id="col-artista" class="list"></div>
+    </div>
+    <div class="column" ondrop="handleDrop(event, 'contrato')" ondragover="allowDrop(event)">
+        <div class="col-header">Contrato / Gestión</div>
+        <div id="col-contrato" class="list"></div>
+    </div>
+    <div class="column" ondrop="handleDrop(event, 'factura')" ondragover="allowDrop(event)">
+        <div class="col-header">Facturación</div>
+        <div id="col-factura" class="list"></div>
+    </div>
+    <div class="column" ondrop="handleDrop(event, 'cobrado')" ondragover="allowDrop(event)">
+        <div class="col-header">Cobrado / Cerrado</div>
+        <div id="col-cobrado" class="list"></div>
+    </div>
+</div>
+
+<div id="overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="modal-title" style="margin:0">Ficha Técnica</h2>
+            <button onclick="closeModal()" style="background:none; border:none; color:white; cursor:pointer; font-size:1.5rem;">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-col-left">
+                <div class="f-group">
+                    <label>Nombre del Evento / Transacción</label>
+                    <input type="text" id="f-name" placeholder="Ej: Festival Verano 2026">
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="f-group">
+                        <label>Fecha del Evento</label>
+                        <input type="date" id="f-date">
+                    </div>
+                    <div class="f-group">
+                        <label>Importe Total (€)</label>
+                        <input type="number" id="f-amount" oninput="calcComision()">
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="f-group">
+                        <label>% Comisión Agency</label>
+                        <input type="number" id="f-comision" value="15" oninput="calcComision()">
+                    </div>
+                    <div class="f-group">
+                        <label>Total Comisión</label>
+                        <div id="f-comision-total" style="padding-top:10px; font-weight:bold; color:var(--accent);">0.00 €</div>
+                    </div>
+                </div>
+                <hr style="border:0; border-top:1px solid var(--border); margin: 2rem 0;">
+                <div class="f-group" style="position:relative;">
+                    <label>Artista</label>
+                    <div id="f-artist" contenteditable="true" class="editable" onkeyup="autocomplete(this, 'artist')" onblur="closeAC('artist')"></div>
+                    <div id="ac-artist" class="autocomplete-list"></div>
+                </div>
+                <div class="f-group" style="position:relative;">
+                    <label>Lugar / Venue</label>
+                    <div id="f-venue" contenteditable="true" class="editable" onkeyup="autocomplete(this, 'venue')" onblur="closeAC('venue')"></div>
+                    <div id="ac-venue" class="autocomplete-list"></div>
+                </div>
+            </div>
+            <div class="modal-col-right">
+                <label>Documentación Requerida</label>
+                <div class="doc-grid" id="doc-grid"></div>
+                <div class="f-group" style="margin-top:1.5rem">
+                    <label>Notas Internas</label>
+                    <textarea id="f-notes" rows="4"></textarea>
+                </div>
+                <div id="billing-data" style="margin-top:1rem; padding:1rem; background:rgba(0,0,0,0.2); border-radius:8px;">
+                    <label style="color:var(--accent)">DATOS FISCALES</label>
+                    <input type="text" id="f-company" placeholder="Razón Social" style="margin-top:5px;">
+                    <input type="text" id="f-nif" placeholder="NIF / CIF" style="margin-top:5px;">
+                    <input type="text" id="f-email" placeholder="Email Facturación" style="margin-top:5px;">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="deleteCard()" style="background:#ef4444; color:white; border:none; padding:0.6rem 1rem; border-radius:8px; cursor:pointer; margin-right:auto;">Eliminar</button>
+            <button onclick="closeModal()" style="background:none; border: 1px solid var(--border); color:white; padding:0.6rem 1.2rem; border-radius:8px; cursor:pointer;">Cancelar</button>
+            <button onclick="saveCard()" class="btn-new">Guardar Cambios</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast">
+    <strong id="toast-title"></strong><br>
+    <span id="toast-body"></span>
+</div>
+
+<script>
+/**
+ * OWL BOOKING CRM - CONFIGURACIÓN Y LÓGICA CORE
+ */
+
+// --- CONFIGURACIÓN (REPLAZAR CON TUS DATOS) ---
+const SUPABASE_URL = 'https://tu-proyecto.supabase.co';
+const SUPABASE_KEY = 'tu-anon-key';
+const MAKE_WEBHOOK_URL = 'https://hook.eu1.make.com/tu-webhook';
+
+const supabase = lib.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let cards = {};
+let editId = null;
+
+const DOC_SLOTS = [
+    { key: 'contrato_firmado', label: 'Contrato', color: '#4f46e5' },
+    { key: 'factura_pdf', label: 'Factura', color: '#10b981' },
+    { key: 'rider', label: 'Rider', color: '#f59e0b' },
+    { key: 'dossier', label: 'Dossier', color: '#ec4899' }
+];
+
+const emptyDocs = () => ({ contrato_firmado: null, factura_pdf: null, rider: null, dossier: null });
+
+// --- LÓGICA DE PERSISTENCIA ---
+
+async function init() {
+    const { data, error } = await supabase.from('crm_cards').select('*');
+    if (!error && data) {
+        data.forEach(item => { cards[item.id] = item.content; });
+    } else {
+        cards = JSON.parse(localStorage.getItem('crm_cards')) || {};
+    }
+    buildBoard();
+}
+
+async function saveCards() {
+    localStorage.setItem('crm_cards', JSON.stringify(cards));
+    if (editId && cards[editId]) {
+        await supabase.from('crm_cards').upsert({ id: editId, content: cards[editId], updated_at: new Date() });
+    }
+}
+
+// --- LÓGICA DE INTERFAZ ---
+
+function buildBoard() {
+    ['artista', 'contrato', 'factura', 'cobrado'].forEach(col => document.getElementById(`col-${col}`).innerHTML = '');
+    Object.keys(cards).forEach(id => {
+        const c = cards[id];
+        const cardEl = document.createElement('div');
+        cardEl.className = 'card';
+        cardEl.draggable = true;
+        cardEl.id = id;
+        cardEl.onclick = () => openModal(id);
+        cardEl.ondragstart = (e) => e.dataTransfer.setData('text', id);
+        cardEl.innerHTML = `
+            <div class="card-tag">${c.artist || 'Sin Artista'}</div>
+            <div class="card-title">${c.name || 'Sin título'}</div>
+            <div class="card-info"><span>📅 ${c.date || '--'}</span><span>💰 ${c.amount || 0}€</span></div>
+            <div class="card-docs-status">${Object.keys(c.docs || {}).map(k => c.docs[k] ? `<div class="mini-dot" style="background:${DOC_SLOTS.find(s=>s.key===k).color}"></div>` : '').join('')}</div>
+        `;
+        document.getElementById(`col-${c.col}`).appendChild(cardEl);
+    });
+}
+
+function allowDrop(e) { e.preventDefault(); }
+
+async function handleDrop(e, colId) {
+    e.preventDefault();
+    const id = e.dataTransfer.getData('text');
+    if (cards[id].col !== colId) {
+        cards[id].col = colId;
+        if (colId === 'contrato' || colId === 'factura') generateAndSend(id, [colId]);
+        saveCards(); buildBoard();
+    }
+}
+
+// --- MODAL Y FORMULARIO ---
+
+function openModal(id) {
+    editId = id; const c = cards[id];
+    document.getElementById('modal-title').textContent = id ? 'Editar Ficha' : 'Nueva Ficha';
+    document.getElementById('f-name').value = c.name || '';
+    document.getElementById('f-date').value = c.date || '';
+    document.getElementById('f-amount').value = c.amount || 0;
+    document.getElementById('f-comision').value = c.comision || 15;
+    document.getElementById('f-artist').textContent = c.artist || '';
+    document.getElementById('f-venue').textContent = c.venue || '';
+    document.getElementById('f-notes').value = c.notes || '';
+    document.getElementById('f-company').value = c.company || '';
+    document.getElementById('f-nif').value = c.nif || '';
+    document.getElementById('f-email').value = c.email || '';
+    calcComision(); renderDocGrid();
+    document.getElementById('overlay').classList.add('open');
+}
+
+function closeModal() { document.getElementById('overlay').classList.remove('open'); editId = null; }
+
+function newCard(colId) {
+    const id = 'c' + Date.now();
+    cards[id] = { col: colId, docs: emptyDocs(), name: '', amount: 0, artist: '', venue: '' };
+    openModal(id);
+}
+
+function saveCard() {
+    if (!editId) return;
+    const c = cards[editId];
+    c.name = document.getElementById('f-name').value;
+    c.date = document.getElementById('f-date').value;
+    c.amount = parseFloat(document.getElementById('f-amount').value) || 0;
+    c.comision = parseFloat(document.getElementById('f-comision').value) || 0;
+    c.artist = document.getElementById('f-artist').textContent;
+    c.venue = document.getElementById('f-venue').textContent;
+    c.notes = document.getElementById('f-notes').value;
+    c.company = document.getElementById('f-company').value;
+    c.nif = document.getElementById('f-nif').value;
+    c.email = document.getElementById('f-email').value;
+    saveCards(); buildBoard(); closeModal();
+}
+
+async function deleteCard() {
+    if (!editId || !confirm("¿Eliminar ficha?")) return;
+    const id = editId; delete cards[id];
+    await supabase.from('crm_cards').delete().eq('id', id);
+    saveCards(); buildBoard(); closeModal();
+}
+
+// --- DOCUMENTACIÓN Y SUBIDAS ---
+
+function renderDocGrid() {
+    const grid = document.getElementById('doc-grid'); grid.innerHTML = '';
+    const c = cards[editId];
+    DOC_SLOTS.forEach(slot => {
+        const hasDoc = !!(c.docs && c.docs[slot.key]);
+        const div = document.createElement('div');
+        div.className = 'doc-slot';
+        div.innerHTML = `
+            <div class="doc-slot-top"><div class="doc-dot" style="background:${slot.color}"></div><span>${slot.label}</span></div>
+            <div class="doc-filename">${hasDoc ? c.docs[slot.key] : 'Vacio'}</div>
+            <button class="doc-btn upload" onclick="document.getElementById('up-${slot.key}').click()">${hasDoc ? 'Cambiar' : 'Subir'}</button>
+            <input type="file" id="up-${slot.key}" style="display:none" onchange="handleFile(this, '${slot.key}')">
+        `;
+        grid.appendChild(div);
+    });
+}
+
+async function handleFile(input, key) {
+    const file = input.files[0]; if (!file) return;
+    showToast("Subiendo...", file.name);
+    const { data, error } = await supabase.storage.from('agency-docs').upload(`${editId}/${key}_${file.name}`, file);
+    if (!error) {
+        cards[editId].docs[key] = file.name;
+        saveCards(); renderDocGrid(); showToast("Éxito", "Archivo subido");
+    }
+}
+
+// --- AUTOMATIZACIÓN ---
+
+async function generateAndSend(id, types) {
+    const c = cards[id];
+    showToast("Make.com", "Enviando datos para automatización...");
+    await fetch(MAKE_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...c, trigger: types[0], id_crm: id })
+    });
+}
+
+function calcComision() {
+    const amt = parseFloat(document.getElementById('f-amount').value) || 0;
+    const pct = parseFloat(document.getElementById('f-comision').value) || 0;
+    document.getElementById('f-comision-total').textContent = ((amt * pct) / 100).toFixed(2) + ' €';
+}
+
+function showToast(title, body) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-title').textContent = title;
+    document.getElementById('toast-body').textContent = body;
+    t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function autocomplete(el, type) {
+    const val = el.textContent.toLowerCase();
+    const list = document.getElementById('ac-' + type);
+    list.innerHTML = '';
+    if (val.length < 2) { list.style.display = 'none'; return; }
+    const items = [...new Set(Object.values(cards).map(c => type === 'artist' ? c.artist : c.venue))].filter(i => i && i.toLowerCase().includes(val));
+    if (items.length > 0) {
+        list.style.display = 'block';
+        items.forEach(i => {
+            const d = document.createElement('div'); d.className = 'autocomplete-item'; d.textContent = i;
+            d.onclick = () => { el.textContent = i; list.style.display = 'none'; };
+            list.appendChild(d);
+        });
+    }
+}
+
+function closeAC(type) { setTimeout(() => document.getElementById('ac-' + type).style.display = 'none', 200); }
+
+window.onload = init;
+</script>
+</body>
+</html><!DOCTYPE html>
+<html lang="es">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CRM OWL Booking Agency</title>
