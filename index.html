@@ -28,6 +28,55 @@
 .anexo-name { font-family: var(--mono); font-size: 10px; color: #15803d; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
 .anexo-remove { font-size: 9px; color: #ef4444; border: none; background: none; cursor: pointer; padding: 0 2px; flex-shrink: 0; line-height: 1; }
 .anexo-remove:hover { text-decoration: underline; }
+
+/* ── LOGIN ── */
+.login-overlay {
+  display: none; position: fixed; inset: 0;
+  background: #1a1200; z-index: 200;
+  align-items: center; justify-content: center;
+}
+.login-overlay.open { display: flex; }
+.login-box {
+  background: #f5c800; border: 2px solid #1a1200; border-radius: 16px;
+  padding: 36px 32px; width: 100%; max-width: 360px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.login-logo { display: flex; align-items: center; gap: 10px; }
+.login-logo img { width: 40px; height: 40px; border-radius: 50%; }
+.login-logo span { font-family: var(--mono); font-size: 12px; color: #1a1200; font-weight: 500; letter-spacing: 0.06em; }
+.login-title { font-size: 18px; font-weight: 500; color: #1a1200; margin-top: 4px; }
+.login-subtitle { font-size: 12px; color: #4a3800; margin-top: -8px; }
+.login-field { display: flex; flex-direction: column; gap: 5px; }
+.login-field label { font-size: 10px; color: #4a3800; text-transform: uppercase; letter-spacing: 0.07em; font-weight: 500; }
+.login-field input {
+  font-family: var(--font); font-size: 13px; color: #1a1200;
+  background: #fffde8; border: 1px solid #c89e00; border-radius: 7px;
+  padding: 10px 12px; width: 100%; transition: border-color 0.15s;
+}
+.login-field input:focus { outline: none; border-color: #1a1200; }
+.login-btn {
+  font-family: var(--font); font-size: 13px; font-weight: 500;
+  background: #1a1200; color: #f5c800; border: none; border-radius: 8px;
+  padding: 12px; cursor: pointer; transition: background 0.15s; margin-top: 4px;
+}
+.login-btn:hover { background: #3a2800; }
+.login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.login-error {
+  font-size: 11px; color: #c2410c; background: #fff0e8;
+  border: 1px solid #f97316; border-radius: 6px;
+  padding: 8px 10px; display: none;
+}
+.login-error.show { display: block; }
+
+/* ── HEADER USER ── */
+.user-badge { display: flex; align-items: center; gap: 8px; }
+.user-email { font-family: var(--mono); font-size: 11px; color: #a08a00; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btn-logout {
+  font-family: var(--font); font-size: 11px; color: #f5c800;
+  background: none; border: 1px solid #3a2800; border-radius: 5px;
+  padding: 4px 10px; cursor: pointer; transition: all 0.15s;
+}
+.btn-logout:hover { border-color: #f5c800; }
 </style>
 <style>
 :root {
@@ -136,6 +185,28 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 </head>
 <body>
 
+<!-- ── LOGIN ── -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">
+      <img src="data:image/png;base64,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" alt="OWL" onerror="this.style.display='none'">
+      <span>OWL BOOKING AGENCY</span>
+    </div>
+    <div class="login-title">Acceder al CRM</div>
+    <div class="login-subtitle">Introduce tus credenciales de Supabase</div>
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="tu@email.com" autocomplete="email">
+    </div>
+    <div class="login-field">
+      <label>Contrase&ntilde;a</label>
+      <input type="password" id="login-password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password">
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Iniciar sesi&oacute;n</button>
+  </div>
+</div>
+
 <div class="header">
   <div class="logo">
     <img src="data:image/png;base64,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" alt="OWL" onerror="this.style.display='none'">
@@ -143,10 +214,16 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
   </div>
   <div class="header-stats">
     <div class="stat"><div class="stat-val" id="total-fichas">0</div><div class="stat-label">Fichas</div></div>
-    <div class="stat"><div class="stat-val" id="total-pipeline">€ 0</div><div class="stat-label">Pipeline total</div></div>
-    <div class="stat"><div class="stat-val" id="total-comision">€ 0</div><div class="stat-label">Comisión total</div></div>
+    <div class="stat"><div class="stat-val" id="total-pipeline">&euro; 0</div><div class="stat-label">Pipeline total</div></div>
+    <div class="stat"><div class="stat-val" id="total-comision">&euro; 0</div><div class="stat-label">Comisi&oacute;n total</div></div>
   </div>
-  <button class="btn-new" onclick="newCard(null)">+ Nueva ficha</button>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div class="user-badge">
+      <span class="user-email" id="user-email"></span>
+      <button class="btn-logout" id="btn-logout" onclick="doLogout()" style="display:none">Cerrar sesi&oacute;n</button>
+    </div>
+    <button class="btn-new" onclick="newCard(null)">+ Nueva ficha</button>
+  </div>
 </div>
 
 <div class="board-wrap"><div class="board" id="board"></div></div>
@@ -161,46 +238,46 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
   <div class="modal">
     <div class="modal-head">
       <h2 id="modal-title">Ficha</h2>
-      <button class="modal-close" onclick="closeModal()">×</button>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
     </div>
 
-    <div class="section-label">Información general</div>
+    <div class="section-label">Informaci&oacute;n general</div>
     <div class="fg">
-      <div class="f full"><label>Nombre de la transacción</label><input id="f-name" type="text" placeholder="Ej: The Jazz Collective – Razzmatazz"></div>
-      <div class="f"><label>Fecha de prestación</label><input id="f-date" type="date"></div>
-      <div class="f"><label>Importe (€)</label><input id="f-amount" type="number" step="0.01" placeholder="0.00" oninput="calcComision()"></div>
-      <div class="f"><label>% Comisión</label><input id="f-comision" type="number" step="0.1" min="0" max="100" placeholder="15" oninput="calcComision()"></div>
-      <div class="f"><label>Comisión (€)</label><input id="f-comision-euros" type="text" readonly style="background:#fff8e0;font-family:var(--mono);color:#b45309;font-weight:500"></div>
+      <div class="f full"><label>Nombre de la transacci&oacute;n</label><input id="f-name" type="text" placeholder="Ej: The Jazz Collective &ndash; Razzmatazz"></div>
+      <div class="f"><label>Fecha de prestaci&oacute;n</label><input id="f-date" type="date"></div>
+      <div class="f"><label>Importe (&euro;)</label><input id="f-amount" type="number" step="0.01" placeholder="0.00" oninput="calcComision()"></div>
+      <div class="f"><label>% Comisi&oacute;n</label><input id="f-comision" type="number" step="0.1" min="0" max="100" placeholder="15" oninput="calcComision()"></div>
+      <div class="f"><label>Comisi&oacute;n (&euro;)</label><input id="f-comision-euros" type="text" readonly style="background:#fff8e0;font-family:var(--mono);color:#b45309;font-weight:500"></div>
     </div>
 
-    <div class="section-label">Artista & Espacio</div>
+    <div class="section-label">Artista &amp; Espacio</div>
     <div class="fg">
       <div class="f"><label>Artista / Grupo</label><div id="f-artist" contenteditable="true" role="textbox" aria-placeholder="Nombre del artista" class="fake-input" oninput="autocomplete(this,'artist')" onblur="setTimeout(()=>closeAC('artist'),200)" spellcheck="false"></div><div class="autocomplete-list" id="ac-artist" style="display:none"></div></div>
       <div class="f"><label>Espacio / Venue</label><div id="f-venue" contenteditable="true" role="textbox" aria-placeholder="Nombre del espacio" class="fake-input" oninput="autocomplete(this,'venue')" onblur="setTimeout(()=>closeAC('venue'),200)" spellcheck="false"></div><div class="autocomplete-list" id="ac-venue" style="display:none"></div></div>
       <div class="f"><label>Email artista</label><input id="f-artist-email" type="email" placeholder="artista@mail.com"></div>
       <div class="f"><label>Email contacto (venue)</label><input id="f-email" type="email" placeholder="venue@mail.com"></div>
-      <div class="f"><label>Teléfono</label><input id="f-phone" type="tel" placeholder="+34 600 000 000"></div>
+      <div class="f"><label>Tel&eacute;fono</label><input id="f-phone" type="tel" placeholder="+34 600 000 000"></div>
     </div>
 
     <div class="section-label">Datos fiscales</div>
     <div class="fg">
-      <div class="f full"><label>Nombre de la empresa</label><input id="f-company" type="text" placeholder="Razón social completa"></div>
+      <div class="f full"><label>Nombre de la empresa</label><input id="f-company" type="text" placeholder="Raz&oacute;n social completa"></div>
       <div class="f"><label>NIF / CIF</label><input id="f-nif" type="text" placeholder="B12345678"></div>
-      <div class="f full"><label>Dirección fiscal</label><input id="f-address" type="text" placeholder="C/ Nombre, Número, Ciudad"></div>
+      <div class="f full"><label>Direcci&oacute;n fiscal</label><input id="f-address" type="text" placeholder="C/ Nombre, N&uacute;mero, Ciudad"></div>
       <div class="f"><label>Representante legal</label><input id="f-legal-rep" type="text" placeholder="Nombre completo"></div>
       <div class="f"><label>DNI del representante</label><input id="f-legal-dni" type="text" placeholder="12345678A"></div>
     </div>
 
-    <div class="section-label">Facturación</div>
+    <div class="section-label">Facturaci&oacute;n</div>
     <div class="fg">
-      <div class="f"><label>Nº Factura</label><input id="f-num-factura" type="text" placeholder="Se asigna automáticamente" style="font-family:var(--mono);background:#fff8e0;border-color:#c89e00"></div>
+      <div class="f"><label>N&ordm; Factura</label><input id="f-num-factura" type="text" placeholder="Se asigna autom&aacute;ticamente" style="font-family:var(--mono);background:#fff8e0;border-color:#c89e00"></div>
       <div class="f"><label>Fecha de factura</label><input id="f-fecha-factura" type="text" placeholder="Se asigna al enviar" readonly style="background:#f5f5f5;color:#999;font-family:var(--mono)"></div>
     </div>
-    <div style="font-size:10px;color:#7a6000;margin-top:4px;margin-bottom:8px;">El Nº Factura se asigna automáticamente al pasar a "Factura Enviada" y no cambia aunque se vuelva a arrastrar. La fecha sí se actualiza.</div>
+    <div style="font-size:10px;color:#7a6000;margin-top:4px;margin-bottom:8px;">El N&ordm; Factura se asigna autom&aacute;ticamente al pasar a &ldquo;Factura Enviada&rdquo; y no cambia aunque se vuelva a arrastrar. La fecha s&iacute; se actualiza.</div>
 
     <div class="section-label">Notas</div>
     <div class="fg">
-      <div class="f full"><textarea id="f-notes" placeholder="Observaciones, rider técnico, condiciones especiales..."></textarea></div>
+      <div class="f full"><textarea id="f-notes" placeholder="Observaciones, rider t&eacute;cnico, condiciones especiales..."></textarea></div>
     </div>
 
     <div class="section-label">Documentos</div>
@@ -250,23 +327,87 @@ function emptyDocs() {
 }
 
 function fmt(n) {
-  return '€ ' + (n||0).toLocaleString('es-ES', { minimumFractionDigits:0, maximumFractionDigits:0 });
+  return '\u20ac ' + (n||0).toLocaleString('es-ES', { minimumFractionDigits:0, maximumFractionDigits:0 });
 }
 
 function getDefaultCards() {
   return {
-    'c1': { name:'The Jazz Collective – Razzmatazz', date:'2026-04-12', amount:3500, artist:'The Jazz Collective', venue:'Razzmatazz', email:'booking@razzmatazz.es', artistEmail:'manager@jazzc.com', phone:'+34 932 001 122', company:'Razzmatazz SL', nif:'B12345678', address:'C/ Pamplona 88, Barcelona', legalRep:'', legalDni:'', notes:'Catering incluido', docs:{...emptyDocs(), rider:'rider.pdf', epk:'epk.pdf'}, col:'artista' },
-    'c2': { name:'Marta Soto – Sala Apolo', date:'2026-05-03', amount:1800, artist:'Marta Soto', venue:'Sala Apolo', email:'produccion@apolo.es', artistEmail:'marta@soto.com', phone:'+34 934 412 040', company:'Sala Apolo SL', nif:'A98765432', address:'C/ Nou de la Rambla 113', legalRep:'', legalDni:'', notes:'', docs:emptyDocs(), col:'oferta_enviada' },
-    'c3': { name:'DJ Forma – Nitsa Club', date:'2026-04-20', amount:2200, artist:'DJ Forma', venue:'Nitsa Club', email:'info@nitsa.com', artistEmail:'djforma@mail.com', phone:'+34 933 178 600', company:'Nitsa Club SL', nif:'C11223344', address:'C/ Nou de la Rambla 113', legalRep:'', legalDni:'', notes:'Equipo propio', docs:{...emptyDocs(), rider:'rider_djforma.pdf', hospitality:'hospitality.pdf'}, col:'contrato_factura' },
-    'c4': { name:'Los Tsunamis – BARTS', date:'2026-06-01', amount:4800, artist:'Los Tsunamis', venue:'BARTS', email:'barts@barts.cat', artistEmail:'tsunamis@mgmt.com', phone:'+34 933 240 740', company:'BARTS SL', nif:'B55443322', address:'Av. Paral·lel 62, Barcelona', legalRep:'', legalDni:'', notes:'', docs:{...emptyDocs(), hoja_ruta:'hoja_ruta.pdf'}, col:'factura_cobrada' }
+    'c1': { name:'The Jazz Collective \u2013 Razzmatazz', date:'2026-04-12', amount:3500, artist:'The Jazz Collective', venue:'Razzmatazz', email:'booking@razzmatazz.es', artistEmail:'manager@jazzc.com', phone:'+34 932 001 122', company:'Razzmatazz SL', nif:'B12345678', address:'C/ Pamplona 88, Barcelona', legalRep:'', legalDni:'', notes:'Catering incluido', docs:{...emptyDocs(), rider:'rider.pdf', epk:'epk.pdf'}, col:'artista' },
+    'c2': { name:'Marta Soto \u2013 Sala Apolo', date:'2026-05-03', amount:1800, artist:'Marta Soto', venue:'Sala Apolo', email:'produccion@apolo.es', artistEmail:'marta@soto.com', phone:'+34 934 412 040', company:'Sala Apolo SL', nif:'A98765432', address:'C/ Nou de la Rambla 113', legalRep:'', legalDni:'', notes:'', docs:emptyDocs(), col:'oferta_enviada' },
+    'c3': { name:'DJ Forma \u2013 Nitsa Club', date:'2026-04-20', amount:2200, artist:'DJ Forma', venue:'Nitsa Club', email:'info@nitsa.com', artistEmail:'djforma@mail.com', phone:'+34 933 178 600', company:'Nitsa Club SL', nif:'C11223344', address:'C/ Nou de la Rambla 113', legalRep:'', legalDni:'', notes:'Equipo propio', docs:{...emptyDocs(), rider:'rider_djforma.pdf', hospitality:'hospitality.pdf'}, col:'contrato_factura' },
+    'c4': { name:'Los Tsunamis \u2013 BARTS', date:'2026-06-01', amount:4800, artist:'Los Tsunamis', venue:'BARTS', email:'barts@barts.cat', artistEmail:'tsunamis@mgmt.com', phone:'+34 933 240 740', company:'BARTS SL', nif:'B55443322', address:'Av. Paral\u00b7lel 62, Barcelona', legalRep:'', legalDni:'', notes:'', docs:{...emptyDocs(), hoja_ruta:'hoja_ruta.pdf'}, col:'factura_cobrada' }
   };
 }
 
-// ── SUPABASE DB ───────────────────────────────────────────
+// ── CONFIG ────────────────────────────────────────────────
+const SUPABASE_URL = 'https://elkobztdcdskmnlvhudf.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsa29ienRkY2Rza21ubHZodWRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MjY0NzIsImV4cCI6MjA5MDMwMjQ3Mn0.C373qTfoAvyzan8qt3k2ukzk4w01dkWiWWMZutoSrVM';
+const SUPABASE_BUCKET = 'Documentos';
+const MAKE_WEBHOOK = 'https://hook.eu1.make.com/lnxfq84l38pywu3izj52dc3tasjdtsit';
+
+let _authToken = SUPABASE_KEY; // se reemplaza con JWT de usuario tras login
+
+// ── AUTH ──────────────────────────────────────────────────
+async function doLogin() {
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const btn      = document.getElementById('login-btn');
+  const errEl    = document.getElementById('login-error');
+  errEl.className = 'login-error';
+  if (!email || !password) { showLoginError('Introduce email y contrase\u00f1a.'); return; }
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  try {
+    const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.access_token) throw new Error(data.error_description || data.msg || 'Credenciales incorrectas');
+    _authToken = data.access_token;
+    localStorage.setItem('owl_session', JSON.stringify({ token: data.access_token, email }));
+    onLoginSuccess(email);
+  } catch(e) {
+    showLoginError(e.message);
+    btn.disabled = false; btn.textContent = 'Iniciar sesi\u00f3n';
+  }
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.className = 'login-error show';
+}
+
+function onLoginSuccess(email) {
+  document.getElementById('login-overlay').className = 'login-overlay';
+  document.getElementById('user-email').textContent = email;
+  document.getElementById('btn-logout').style.display = 'block';
+  init();
+}
+
+function doLogout() {
+  localStorage.removeItem('owl_session');
+  _authToken = SUPABASE_KEY;
+  document.getElementById('user-email').textContent = '';
+  document.getElementById('btn-logout').style.display = 'none';
+  document.getElementById('board').innerHTML = '';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-password').value = '';
+  document.getElementById('login-btn').disabled = false;
+  document.getElementById('login-btn').textContent = 'Iniciar sesi\u00f3n';
+  document.getElementById('login-overlay').className = 'login-overlay open';
+}
+
+// ── SUPABASE HELPERS ──────────────────────────────────────
+function authHeaders() {
+  return { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + _authToken };
+}
+
 async function dbLoadCards() {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/crm_fichas?select=id,data&order=updated_at.asc`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    const res = await fetch(SUPABASE_URL + '/rest/v1/crm_fichas?select=id,data&order=updated_at.asc', {
+      headers: authHeaders()
     });
     if (!res.ok) throw new Error(await res.text());
     const rows = await res.json();
@@ -280,14 +421,9 @@ async function dbLoadCards() {
 async function dbSaveCard(id, cardData) {
   const { docsData, ...data } = cardData;
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/crm_fichas`, {
+    await fetch(SUPABASE_URL + '/rest/v1/crm_fichas', {
       method: 'POST',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates'
-      },
+      headers: { ...authHeaders(), 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
       body: JSON.stringify({ id, data, updated_at: new Date().toISOString() })
     });
   } catch(e) { console.warn('dbSaveCard error:', e); }
@@ -295,9 +431,9 @@ async function dbSaveCard(id, cardData) {
 
 async function dbDeleteCard(id) {
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/crm_fichas?id=eq.${encodeURIComponent(id)}`, {
+    await fetch(SUPABASE_URL + '/rest/v1/crm_fichas?id=eq.' + encodeURIComponent(id), {
       method: 'DELETE',
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+      headers: authHeaders()
     });
   } catch(e) { console.warn('dbDeleteCard error:', e); }
 }
@@ -306,21 +442,16 @@ async function dbGetNextNumFactura() {
   const year = new Date().getFullYear();
   const yearKey = 'OW' + year;
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/crm_config?key=eq.factura_contador&select=value`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    const res = await fetch(SUPABASE_URL + '/rest/v1/crm_config?key=eq.factura_contador&select=value', {
+      headers: authHeaders()
     });
     const rows = await res.json();
     const current = rows[0]?.value || {};
     const n = (current[yearKey] || 2) + 1;
     current[yearKey] = n;
-    await fetch(`${SUPABASE_URL}/rest/v1/crm_config`, {
+    await fetch(SUPABASE_URL + '/rest/v1/crm_config', {
       method: 'POST',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates'
-      },
+      headers: { ...authHeaders(), 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
       body: JSON.stringify({ key: 'factura_contador', value: current })
     });
     const pad = n < 10 ? '00' : n < 100 ? '0' : '';
@@ -329,6 +460,25 @@ async function dbGetNextNumFactura() {
     console.warn('dbGetNextNumFactura error:', e);
     return getNextNumFactura();
   }
+}
+
+async function uploadToSupabase(file, cardId, slotKey) {
+  const ext = file.name.split('.').pop();
+  const path = cardId + '/' + slotKey + '_' + Date.now() + '.' + ext;
+  const res = await fetch(SUPABASE_URL + '/storage/v1/object/' + SUPABASE_BUCKET + '/' + path, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + _authToken,
+      'Content-Type': file.type || 'application/octet-stream',
+      'x-upsert': 'true'
+    },
+    body: file
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error('Supabase upload error: ' + err);
+  }
+  return SUPABASE_URL + '/storage/v1/object/public/' + SUPABASE_BUCKET + '/' + path;
 }
 
 function saveCards() {
@@ -351,6 +501,15 @@ function loadCards() {
   return getDefaultCards();
 }
 
+function getNextNumFactura() {
+  const year = new Date().getFullYear();
+  const key = 'owl_factura_contador_' + year;
+  let n = parseInt(localStorage.getItem(key) || '2') + 1;
+  localStorage.setItem(key, n);
+  const pad = n < 10 ? '00' : n < 100 ? '0' : '';
+  return 'OW' + year + pad + n;
+}
+
 let cards = loadCards();
 let nextId = Object.keys(cards).length + 1;
 let editId = null;
@@ -366,11 +525,11 @@ function buildBoard() {
       <div class="col-head">
         <div class="col-indicator" style="background:${col.color}"></div>
         <div class="col-name">${col.label}</div>
-        <div class="col-sum" id="sum-${col.id}">€ 0</div>
-        <div class="col-com" id="com-${col.id}">com. € 0</div>
+        <div class="col-sum" id="sum-${col.id}">\u20ac 0</div>
+        <div class="col-com" id="com-${col.id}">com. \u20ac 0</div>
         <div class="col-cnt" id="cnt-${col.id}">0 fichas</div>
       </div>
-      <div class="add-btn" onclick="newCard('${col.id}')">+ Añadir ficha</div>
+      <div class="add-btn" onclick="newCard('${col.id}')">+ A\u00f1adir ficha</div>
       <div class="col-body" id="body-${col.id}"
         ondragover="event.preventDefault();this.classList.add('over')"
         ondragleave="this.classList.remove('over')"
@@ -397,7 +556,7 @@ function renderAll() {
       card.dataset.id = id;
       card.ondragstart = () => { dragId = id; card.classList.add('dragging'); };
       card.ondragend = () => { card.classList.remove('dragging'); document.querySelectorAll('.col-body').forEach(b => b.classList.remove('over')); };
-      const dateStr = c.date ? new Date(c.date + 'T12:00:00').toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric' }) : '—';
+      const dateStr = c.date ? new Date(c.date + 'T12:00:00').toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric' }) : '\u2014';
       card.innerHTML = `
         <div class="card-name">${c.name || 'Sin nombre'}</div>
         <div class="card-date">${dateStr}</div>
@@ -444,40 +603,6 @@ function onDrop(e, toCol) {
   dragId = null;
 }
 
-const MAKE_WEBHOOK = 'https://hook.eu1.make.com/lnxfq84l38pywu3izj52dc3tasjdtsit';
-
-const SUPABASE_URL = 'https://elkobztdcdskmnlvhudf.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsa29ienRkY2Rza21ubHZodWRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MjY0NzIsImV4cCI6MjA5MDMwMjQ3Mn0.C373qTfoAvyzan8qt3k2ukzk4w01dkWiWWMZutoSrVM';
-const SUPABASE_BUCKET = 'Documentos';
-
-async function uploadToSupabase(file, cardId, slotKey) {
-  const ext = file.name.split('.').pop();
-  const path = `${cardId}/${slotKey}_${Date.now()}.${ext}`;
-  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${SUPABASE_BUCKET}/${path}`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${SUPABASE_KEY}`,
-      'Content-Type': file.type || 'application/octet-stream',
-      'x-upsert': 'true'
-    },
-    body: file
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error('Supabase upload error: ' + err);
-  }
-  return `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_BUCKET}/${path}`;
-}
-
-function getNextNumFactura() {
-  const year = new Date().getFullYear();
-  const key = 'owl_factura_contador_' + year;
-  let n = parseInt(localStorage.getItem(key) || '2') + 1;
-  localStorage.setItem(key, n);
-  const pad = n < 10 ? '00' : n < 100 ? '0' : '';
-  return 'OW' + year + pad + n;
-}
-
 async function sendToMake(payload) {
   try {
     await fetch(MAKE_WEBHOOK, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
@@ -489,9 +614,6 @@ function triggerAutomation(id, col) {
   if (col === 'contrato_factura') generateAndSend(id, ['contrato']);
   else if (col === 'rider') {
     const urls = c.docsUrls || {};
-    // ── FIX: solo se incluyen en el payload los archivos que existen ──
-    // Si falta alguno (rider, hospitality o epk), simplemente no se envía
-    // ese campo a Make, evitando errores por URLs null.
     const payload = {
       accion:             'rider_hospitality_epk',
       nombre_transaccion: c.name,
@@ -502,18 +624,16 @@ function triggerAutomation(id, col) {
       fecha:              c.date           || '',
       asunto:             'Rider, Hospitality y EPK',
       cuerpo:             'Adjuntamos los documentos disponibles.',
-      // Flags booleanos para que Make pueda hacer routing sin comprobar si el campo existe
       tiene_rider:        !!(urls.rider),
       tiene_hospitality:  !!(urls.hospitality),
       tiene_epk:          !!(urls.epk)
     };
-    // Solo añadir la URL si el archivo existe; si no, el campo no se incluye en el JSON
     if (urls.rider)       payload.url_rider       = urls.rider;
     if (urls.hospitality) payload.url_hospitality = urls.hospitality;
     if (urls.epk)         payload.url_epk         = urls.epk;
     sendToMake(payload);
-    const docs_presentes = ['rider','hospitality','epk'].filter(k => urls[k]).join(', ') || 'ninguno subido aún';
-    showToast('Enviando a Make.com', 'Docs: ' + docs_presentes + ' → ' + c.email);
+    const docs_presentes = ['rider','hospitality','epk'].filter(k => urls[k]).join(', ') || 'ninguno subido a\u00fan';
+    showToast('Enviando a Make.com', 'Docs: ' + docs_presentes + ' \u2192 ' + c.email);
   }
   else if (col === 'hoja_ruta') {
     const urls = c.docsUrls || {};
@@ -524,7 +644,7 @@ function triggerAutomation(id, col) {
       asunto:'Hoja de Ruta', cuerpo:'Adjuntamos Hoja de Ruta.',
       url_hoja_ruta: urls.hoja_ruta || null
     });
-    showToast('Enviando a Make.com', 'Hoja de Ruta → ' + (c.artistEmail || c.email));
+    showToast('Enviando a Make.com', 'Hoja de Ruta \u2192 ' + (c.artistEmail || c.email));
   }
   else if (col === 'factura_enviada') generateAndSend(id, ['factura']);
 }
@@ -534,14 +654,13 @@ async function generateAndSend(id, docs) {
   const panel = document.getElementById('ai-panel');
   panel.className = 'ai-panel show';
   panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
-  document.getElementById('ai-panel-head').textContent = 'Enviando a Make.com · ' + c.name;
-  document.getElementById('ai-out').textContent = 'Datos enviados a Make.com. Make generará los documentos con IA y los enviará por Gmail automáticamente.';
+  document.getElementById('ai-panel-head').textContent = 'Enviando a Make.com \u00b7 ' + c.name;
+  document.getElementById('ai-out').textContent = 'Datos enviados a Make.com. Make generar\u00e1 los documentos con IA y los enviar\u00e1 por Gmail autom\u00e1ticamente.';
   document.getElementById('ai-tabs').innerHTML = '';
 
   const numProforma = 'FP-' + new Date().getFullYear() + '-' + Math.floor(Math.random()*900+100);
   const fechaHoy = new Date().toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric' });
 
-  // Número de factura: se asigna la primera vez y no cambia
   if (docs.includes('factura')) {
     if (!cards[id].numFactura) {
       cards[id].numFactura = await dbGetNextNumFactura();
@@ -553,8 +672,8 @@ async function generateAndSend(id, docs) {
   }
 
   const prompts = {
-    contrato: `Redacta un contrato de servicios artísticos en español para:\n- Transacción: ${c.name}\n- Artista: ${c.artist||''} (${c.artistEmail||''})\n- Espacio/Venue: ${c.venue||''} (${c.email||''})\n- Empresa del cliente: ${c.company||c.venue||''}\n- Representante legal: ${c.legalRep||'—'} — DNI: ${c.legalDni||'—'}\n- Fecha del evento: ${c.date||''}\n- Importe: ${fmt(c.amount)}\n- NIF: ${c.nif||''} — Dirección fiscal: ${c.address||''}\nIncluye: partes contratantes (con nombre y DNI del representante legal), objeto del contrato, caché (base imponible + IVA 21%), condiciones técnicas, forma y plazo de pago, cláusula de resolución, y espacio para firmas con nombre y DNI del representante. Máximo 300 palabras.`,
-    factura: `[El número de factura y el HTML lo genera Make con Claude usando el prompt configurado en Make]`
+    contrato: 'Redacta un contrato de servicios art\u00edsticos en espa\u00f1ol para:\n- Transacci\u00f3n: ' + c.name + '\n- Artista: ' + (c.artist||'') + ' (' + (c.artistEmail||'') + ')\n- Espacio/Venue: ' + (c.venue||'') + ' (' + (c.email||'') + ')\n- Empresa del cliente: ' + (c.company||c.venue||'') + '\n- Representante legal: ' + (c.legalRep||'\u2014') + ' \u2014 DNI: ' + (c.legalDni||'\u2014') + '\n- Fecha del evento: ' + (c.date||'') + '\n- Importe: ' + fmt(c.amount) + '\n- NIF: ' + (c.nif||'') + ' \u2014 Direcci\u00f3n fiscal: ' + (c.address||'') + '\nIncluye: partes contratantes (con nombre y DNI del representante legal), objeto del contrato, cach\u00e9 (base imponible + IVA 21%), condiciones t\u00e9cnicas, forma y plazo de pago, cl\u00e1usula de resoluci\u00f3n, y espacio para firmas con nombre y DNI del representante. M\u00e1ximo 300 palabras.',
+    factura: '[El n\u00famero de factura y el HTML lo genera Make con Claude usando el prompt configurado en Make]'
   };
 
   const emailConfig = {
@@ -613,9 +732,9 @@ async function generateAndSend(id, docs) {
     tabsEl.appendChild(btn);
   });
 
-  document.getElementById('ai-panel-head').textContent = 'Enviado a Make.com · ' + (c.email || '');
+  document.getElementById('ai-panel-head').textContent = 'Enviado a Make.com \u00b7 ' + (c.email || '');
   document.getElementById('ai-out').textContent = 'Prompt enviado a Make.com:\n\n' + prompts[docs[0]];
-  showToast('Enviado a Make.com', 'Asunto: "' + cfg.asunto + '" → ' + (c.email || ''));
+  showToast('Enviado a Make.com', 'Asunto: "' + cfg.asunto + '" \u2192 ' + (c.email || ''));
 }
 
 function openModal(id) {
@@ -719,20 +838,18 @@ function renderDocGrid(docs) {
   DOC_SLOTS.forEach(slot => {
     const div = document.createElement('div');
     div.className = 'doc-slot';
-
     if (slot.key === 'anexos_contrato') {
-      // Multi-file slot
       const files = (docs && Array.isArray(docs[slot.key])) ? docs[slot.key]
-                  : (docs && docs[slot.key]) ? [{ name: docs[slot.key], url: (docs._urls && docs._urls[slot.key]) || null }]
+                  : (docs && docs[slot.key]) ? [{ name: docs[slot.key], url: null }]
                   : [];
       const listHTML = files.length
-        ? files.map((f, i) => `<div class="anexo-item"><span class="anexo-name" title="${f.name}">${f.name}</span><button class="anexo-remove" onclick="removeAnexo(${i})">✕</button></div>`).join('')
+        ? files.map((f, i) => `<div class="anexo-item"><span class="anexo-name" title="${f.name}">${f.name}</span><button class="anexo-remove" onclick="removeAnexo(${i})">&#x2715;</button></div>`).join('')
         : '<span class="doc-filename" id="dfn-anexos_contrato">Sin archivos</span>';
       div.innerHTML = `
         <div class="doc-slot-top">
           <div class="doc-dot" style="background:${slot.color}"></div>
           <span class="doc-slot-name">${slot.label}</span>
-          <button class="doc-btn upload" style="margin-left:auto" onclick="document.getElementById('fi-anexos_contrato').click()">+ Añadir</button>
+          <button class="doc-btn upload" style="margin-left:auto" onclick="document.getElementById('fi-anexos_contrato').click()">+ A&ntilde;adir</button>
         </div>
         <div class="anexos-list" id="anexos-list">${listHTML}</div>
         <input type="file" id="fi-anexos_contrato" style="display:none" accept=".pdf,.doc,.docx,.jpg,.png" multiple onchange="attachAnexos(this)">`;
@@ -764,10 +881,8 @@ function attachDoc(key, input) {
   const span = document.getElementById('dfn-' + key);
   const btn = input.previousElementSibling?.querySelector('button');
   if (span) { span.textContent = 'Subiendo...'; span.className = 'doc-filename'; }
-
   const isNew = editId && editId.startsWith('new:');
   const cardId = isNew ? ('tmp_' + editId.replace('new:', '')) : editId;
-
   uploadToSupabase(file, cardId, key).then(url => {
     if (!isNew && cards[editId]) {
       cards[editId].docs[key] = fname;
@@ -786,7 +901,6 @@ function attachDoc(key, input) {
   }).catch(err => {
     if (span) { span.textContent = 'Error al subir'; span.className = 'doc-filename'; }
     showToast('Error', 'No se pudo subir: ' + err.message);
-    console.error(err);
   });
 }
 
@@ -798,13 +912,10 @@ function removeDoc(key) {
   if (btn) { btn.className = 'doc-btn upload'; btn.textContent = 'Subir'; btn.onclick = () => document.getElementById('fi-' + key).click(); }
 }
 
-
 function attachAnexos(input) {
   if (!input.files || !input.files.length) return;
   const isNew = editId && editId.startsWith('new:');
   const cardId = isNew ? ('tmp_' + editId.replace('new:', '')) : editId;
-
-  // Get current list
   let currentFiles = [];
   if (!isNew && cards[editId]) {
     const raw = cards[editId].docs['anexos_contrato'];
@@ -815,14 +926,11 @@ function attachAnexos(input) {
     if (Array.isArray(pending)) currentFiles = pending;
     else if (pending) currentFiles = [{ name: pending, url: null }];
   }
-
   const uploads = Array.from(input.files).map(file => {
     const key = 'anexos_contrato_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
     return uploadToSupabase(file, cardId, key).then(url => ({ name: file.name, url }));
   });
-
   showToast('Subiendo...', uploads.length + ' archivo' + (uploads.length > 1 ? 's' : ''));
-
   Promise.all(uploads).then(newFiles => {
     const merged = [...currentFiles, ...newFiles];
     if (!isNew && cards[editId]) {
@@ -834,11 +942,8 @@ function attachAnexos(input) {
     }
     renderAnexosList(merged);
     showToast('Archivos subidos', newFiles.map(f => f.name).join(', '));
-  }).catch(err => {
-    showToast('Error', 'No se pudo subir: ' + err.message);
-  });
-
-  input.value = ''; // reset so same file can be re-added
+  }).catch(err => { showToast('Error', 'No se pudo subir: ' + err.message); });
+  input.value = '';
 }
 
 function removeAnexo(idx) {
@@ -868,7 +973,7 @@ function renderAnexosList(files) {
     return;
   }
   list.innerHTML = files.map((f, i) =>
-    `<div class="anexo-item"><span class="anexo-name" title="${f.name}">${f.name}</span><button class="anexo-remove" onclick="removeAnexo(${i})">✕</button></div>`
+    `<div class="anexo-item"><span class="anexo-name" title="${f.name}">${f.name}</span><button class="anexo-remove" onclick="removeAnexo(${i})">&#x2715;</button></div>`
   ).join('');
 }
 
@@ -878,25 +983,17 @@ function getContactBook() {
     if (c.artist) {
       const k = c.artist.toLowerCase();
       const existing = book[k];
-      book[k] = {
-        artist:      c.artist,
-        artistEmail: (c.artistEmail || (existing && existing.artistEmail) || ''),
-        label:       c.artist
-      };
+      book[k] = { artist: c.artist, artistEmail: (c.artistEmail || (existing && existing.artistEmail) || ''), label: c.artist };
     }
     if (c.venue) {
       const k = '__venue__' + c.venue.toLowerCase();
       const existing = book[k];
       book[k] = {
-        venue:    c.venue,
-        email:    (c.email    || (existing && existing.email)    || ''),
-        phone:    (c.phone    || (existing && existing.phone)    || ''),
-        company:  (c.company  || (existing && existing.company)  || ''),
-        nif:      (c.nif      || (existing && existing.nif)      || ''),
-        address:  (c.address  || (existing && existing.address)  || ''),
-        legalRep: (c.legalRep || (existing && existing.legalRep) || ''),
-        legalDni: (c.legalDni || (existing && existing.legalDni) || ''),
-        label:    c.venue
+        venue: c.venue, email: (c.email || (existing && existing.email) || ''),
+        phone: (c.phone || (existing && existing.phone) || ''), company: (c.company || (existing && existing.company) || ''),
+        nif: (c.nif || (existing && existing.nif) || ''), address: (c.address || (existing && existing.address) || ''),
+        legalRep: (c.legalRep || (existing && existing.legalRep) || ''), legalDni: (c.legalDni || (existing && existing.legalDni) || ''),
+        label: c.venue
       };
     }
   });
@@ -911,15 +1008,13 @@ function autocomplete(input, type) {
   const prefix = type === 'venue' ? '__venue__' : '';
   const matches = Object.entries(book)
     .filter(([k]) => k.startsWith(prefix) && k.replace(prefix,'').includes(val))
-    .map(([,v]) => v)
-    .slice(0, 6);
+    .map(([,v]) => v).slice(0, 6);
   if (!matches.length) { list.style.display = 'none'; return; }
   list.innerHTML = matches.map((m, i) =>
     `<div class="autocomplete-item" onmousedown="applyContact(${i},'${type}')">${m.label.replace(new RegExp('('+val+')', 'gi'), '<strong>$1</strong>')}</div>`
   ).join('');
   list._matches = matches;
   list.style.display = 'block';
-
   const exactIdx = matches.findIndex(m => m.label.toLowerCase() === val);
   if (exactIdx !== -1) applyContact(exactIdx, type, true);
 }
@@ -957,7 +1052,7 @@ function applyContact(i, type, silent) {
   list.style.display = 'none';
   if (!silent && filled.length) {
     flashAutofilled(filled);
-    showToast('Autorelleno aplicado', filled.length + ' campo' + (filled.length > 1 ? 's' : '') + ' rellenado' + (filled.length > 1 ? 's' : '') + ' automáticamente');
+    showToast('Autorelleno aplicado', filled.length + ' campo' + (filled.length > 1 ? 's' : '') + ' rellenado' + (filled.length > 1 ? 's' : '') + ' autom\u00e1ticamente');
   }
 }
 
@@ -973,7 +1068,12 @@ function showToast(title, body) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 5000);
 }
 
-// ── INIT — carga desde Supabase ───────────────────────────
+// Login con Enter
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-overlay').classList.contains('open')) doLogin();
+});
+
+// ── INIT ──────────────────────────────────────────────────
 async function init() {
   buildBoard();
   showToast('Cargando...', 'Sincronizando datos con la nube');
@@ -990,7 +1090,21 @@ async function init() {
   }
 }
 
-init();
+// ── ARRANQUE: comprobar sesi&oacute;n guardada ─────────────────
+(function checkSession() {
+  try {
+    const saved = localStorage.getItem('owl_session');
+    if (saved) {
+      const { token, email } = JSON.parse(saved);
+      if (token && email) {
+        _authToken = token;
+        onLoginSuccess(email);
+        return;
+      }
+    }
+  } catch(e) {}
+  document.getElementById('login-overlay').className = 'login-overlay open';
+})();
 </script>
 </body>
 </html>
